@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/* Line clamp utilities */
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.line-clamp-4 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+@theme inline {
+  --font-sans: var(--font-nunito), var(--font-noto-myanmar);
+  --font-myanmar: var(--font-noto-myanmar);
+}
+
+body {
+  font-family: var(--font-nunito), var(--font-noto-myanmar), system-ui, sans-serif;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* Myanmar/Burmese specific styles */
+.myanmar-text {
+  font-family: var(--font-noto-myanmar), system-ui, sans-serif;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Ensure proper rendering of Myanmar Unicode */
+.myanmar-text * {
+  font-variant-ligatures: normal;
+  font-feature-settings: "liga" 1, "clig" 1, "kern" 1;
+}
+
+/* Reading experience optimizations */
+.reading-content {
+  line-height: 1.8;
+  letter-spacing: 0.01em;
+}
+
+.reading-content.myanmar-text {
+  line-height: 2;
+  letter-spacing: 0.02em;
+}
