@@ -7,8 +7,8 @@ import { User, LogOut, Settings, Menu } from "lucide-react";
 import Image from "next/image";
 
 type HeaderProps = {
-  onToggleSidebar?: () => void
-}
+  onToggleSidebar?: () => void;
+};
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
   const { data: session } = useSession();
@@ -52,7 +52,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
       <div className="flex items-center space-x-4">
         {/* Write Button */}
         <Link
-          href="/write"
+          href="/books/upload"
           className="flex items-center space-x-2 bg-p2 hover:bg-p1 px-4 py-2 rounded-[30px] text-white font-medium transition-colors"
         >
           <Image src="/note.png" alt="Write" width={20} height={20} />
@@ -94,11 +94,11 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                   <p className="text-xs text-gray-400">{session.user?.email}</p>
                 </div>
                 <Link
-                  href="/profile"
+                  href="/books"
                   className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
                 >
                   <User className="w-4 h-4 mr-3" />
-                  Profile
+                  My Books
                 </Link>
                 <Link
                   href="/settings"

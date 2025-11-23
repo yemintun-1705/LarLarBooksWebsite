@@ -9,15 +9,18 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "50");
     const offset = parseInt(searchParams.get("offset") || "0");
     const search = searchParams.get("search") || "";
+    const userId = searchParams.get("userId") || "";
 
-    const where = search
-      ? {
-          OR: [
-            { authorName: { contains: search, mode: "insensitive" as const } },
-            { authorProfileImageUrl: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {};
+    let where: any = {};
+
+    if (userId) {
+      where.userId = userId;
+    } else if (search) {
+      where.OR = [
+        { authorName: { contains: search, mode: "insensitive" as const } },
+        { authorProfileImageUrl: { contains: search, mode: "insensitive" as const } },
+      ];
+    }
 
     const [authors, total] = await Promise.all([
       prisma.author.findMany({

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { supabase } from "@/lib/supabase";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
+import { createClient } from "@supabase/supabase-js";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -25,41 +25,60 @@ export async function POST(request: Request) {
     // Validate input
     const validatedData = registerSchema.parse(body);
 
-    // Create user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: validatedData.email,
-      password: validatedData.password,
-      options: {
-        data: {
-          full_name: validatedData.name,
-        },
-        emailRedirectTo: `${process.env.NEXTAUTH_URL}/auth/signin`,
-      },
+    // Check if user already exists
+    const existingProfile = await prisma.profile.findUnique({
+      where: { email: validatedData.email },
     });
 
-    if (authError) {
+    if (existingProfile) {
       return NextResponse.json(
-        { error: authError.message },
+        { error: "User with this email already exists" },
         { status: 400 }
       );
     }
 
-    if (!authData.user) {
+    // Create Supabase admin client
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Create user with Supabase Auth
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: validatedData.email,
+      password: validatedData.password,
+      email_confirm: true, // Auto-confirm email
+      user_metadata: {
+        full_name: validatedData.name,
+      }
+    });
+
+    if (authError || !authData.user) {
+      console.error("Supabase auth error:", authError);
       return NextResponse.json(
-        { error: "Failed to create user" },
-        { status: 500 }
+        { error: authError?.message || "Failed to create user" },
+        { status: 400 }
       );
     }
 
-    // Check if email confirmation is required
-    const emailConfirmationRequired = !authData.session;
-
     // Generate username from email (before @ symbol)
-    const username = validatedData.email.split('@')[0];
+    const username = validatedData.email.split("@")[0];
 
-    // Create profile with the same ID as the auth user
-    const profile = await prisma.profile.create({
-      data: {
+    // Create or update profile
+    const result = await prisma.profile.upsert({
+      where: { id: authData.user.id },
+      update: {
+        email: validatedData.email,
+        fullName: validatedData.name,
+        username: username,
+      },
+      create: {
         id: authData.user.id,
         email: validatedData.email,
         fullName: validatedData.name,
@@ -74,21 +93,17 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log("User and profile created successfully:", profile.id);
-
-    const message = emailConfirmationRequired
-      ? "Account created! Please check your email to confirm your account before signing in."
-      : "Account created successfully! You can now sign in.";
+    console.log("User and profile created successfully:", result.id);
 
     return NextResponse.json(
       {
-        message,
-        requiresEmailConfirmation: emailConfirmationRequired,
+        message: "Account created successfully! You can now sign in.",
+        requiresEmailConfirmation: false,
         profile: {
-          id: profile.id,
-          fullName: profile.fullName,
-          email: profile.email,
-          createdAt: profile.createdAt,
+          id: result.id,
+          fullName: result.fullName,
+          email: result.email,
+          createdAt: result.createdAt,
         },
       },
       { status: 201 }
@@ -97,7 +112,7 @@ export async function POST(request: Request) {
     // Validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: error.issues[0].message },
         { status: 400 }
       );
     }

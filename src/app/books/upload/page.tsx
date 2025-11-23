@@ -1,0 +1,587 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useSidebar } from "@/components/providers/sidebar-provider";
+import Header from "@/components/ui/header";
+import Sidebar from "@/components/ui/sidebar";
+import { ImagePlus, X, Plus, ChevronDown, Upload, Check } from "lucide-react";
+
+interface Genre {
+  id: string;
+  genreName: string;
+}
+
+interface Author {
+  id: string;
+  authorName: string;
+  authorProfileImageUrl?: string;
+}
+
+const LANGUAGES = [
+  "English", "Spanish", "French", "German", "Chinese", "Japanese",
+  "Korean", "Portuguese", "Russian", "Arabic", "Hindi", "Italian"
+];
+
+export default function UploadBookPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const { expanded: sidebarExpanded, toggle } = useSidebar();
+
+  const [formData, setFormData] = useState({
+    title: "",
+    subtitle: "",
+    language: "English",
+    synopsis: "",
+    bookCoverPath: "",
+  });
+
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedAuthors, setSelectedAuthors] = useState<Author[]>([]);
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [authors, setAuthors] = useState<Author[]>([]);
+  const [userAuthorId, setUserAuthorId] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [coverPreview, setCoverPreview] = useState("");
+
+  // Modal states
+  const [showAuthorModal, setShowAuthorModal] = useState(false);
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [showGenreModal, setShowGenreModal] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  // Load saved data from sessionStorage on mount
+  useEffect(() => {
+    const savedData = sessionStorage.getItem('bookUploadData');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setFormData(parsed.formData || formData);
+        setSelectedGenres(parsed.selectedGenres || []);
+        setSelectedAuthors(parsed.selectedAuthors || []);
+        setCoverPreview(parsed.coverPreview || "");
+      } catch (error) {
+        console.error("Error loading saved data:", error);
+      }
+    }
+  }, []);
+
+  // Save form data to sessionStorage whenever it changes
+  useEffect(() => {
+    const dataToSave = {
+      formData,
+      selectedGenres,
+      selectedAuthors,
+      coverPreview,
+    };
+    sessionStorage.setItem('bookUploadData', JSON.stringify(dataToSave));
+  }, [formData, selectedGenres, selectedAuthors, coverPreview]);
+
+  useEffect(() => {
+    fetchGenres();
+    fetchAuthors();
+    if (session?.user?.id) {
+      checkOrCreateAuthorProfile();
+    }
+  }, [session]);
+
+  const fetchGenres = async () => {
+    try {
+      const response = await fetch("/api/genres");
+      const data = await response.json();
+      if (data.success) {
+        setGenres(data.genres || []);
+      }
+    } catch (err) {
+      console.error("Error fetching genres:", err);
+    }
+  };
+
+  const fetchAuthors = async () => {
+    try {
+      const response = await fetch("/api/authors");
+      const data = await response.json();
+      if (data.success) {
+        setAuthors(data.authors || []);
+      }
+    } catch (err) {
+      console.error("Error fetching authors:", err);
+    }
+  };
+
+  const checkOrCreateAuthorProfile = async () => {
+    try {
+      const response = await fetch(`/api/authors?userId=${session?.user?.id}`);
+      const data = await response.json();
+
+      if (data.success && data.authors && data.authors.length > 0) {
+        const userAuthor = data.authors[0];
+        setUserAuthorId(userAuthor.id);
+        if (selectedAuthors.length === 0) {
+          setSelectedAuthors([userAuthor]);
+        }
+      } else {
+        const createResponse = await fetch("/api/authors", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            authorName: session?.user?.name || "Anonymous Author",
+            userId: session?.user?.id,
+          }),
+        });
+        const createData = await createResponse.json();
+        if (createData.success) {
+          setUserAuthorId(createData.author.id);
+          if (selectedAuthors.length === 0) {
+            setSelectedAuthors([createData.author]);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error checking author profile:", err);
+    }
+  };
+
+  const handleGenreToggle = (genreId: string) => {
+    setSelectedGenres((prev) =>
+      prev.includes(genreId)
+        ? prev.filter((id) => id !== genreId)
+        : [...prev, genreId]
+    );
+  };
+
+  const handleAddAuthor = (author: Author) => {
+    if (!selectedAuthors.find((a) => a.id === author.id)) {
+      setSelectedAuthors([...selectedAuthors, author]);
+    }
+    setShowAuthorModal(false);
+  };
+
+  const handleRemoveAuthor = (authorId: string) => {
+    setSelectedAuthors((prev) => prev.filter((a) => a.id !== authorId));
+  };
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setFormData({ ...formData, bookCoverPath: url });
+    setCoverPreview(url);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setCoverPreview(result);
+      setFormData({ ...formData, bookCoverPath: result });
+      setUploadingCover(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleWriteHere = async () => {
+    if (!formData.title) {
+      setError("Please enter a book title first");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const bookData = {
+        bookName: formData.title,
+        description: formData.synopsis,
+        subtitle: formData.subtitle,
+        language: formData.language,
+        status: "draft",
+        bookCoverPath: formData.bookCoverPath,
+        authorId: selectedAuthors[0]?.id || userAuthorId,
+        genreIds: selectedGenres,
+        userId: session?.user?.id, // Add userId for publisher creation
+      };
+
+      const response = await fetch("/api/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // DON'T clear sessionStorage - keep data for when user navigates back
+        router.push(`/books/${data.book.id}/write`);
+      } else {
+        setError(data.error || "Failed to save book");
+      }
+    } catch (err) {
+      setError("Error saving book");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearForm = () => {
+    sessionStorage.removeItem('bookUploadData');
+    setFormData({
+      title: "",
+      subtitle: "",
+      language: "English",
+      synopsis: "",
+      bookCoverPath: "",
+    });
+    setSelectedGenres([]);
+    setSelectedAuthors(userAuthorId ? authors.filter(a => a.id === userAuthorId) : []);
+    setCoverPreview("");
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-[#181818] flex items-center justify-center text-white">
+        Loading...
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    router.push("/auth/signin");
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#181818]">
+      <Header onToggleSidebar={toggle} />
+      <div className="w-full h-[1px] bg-[#454545]"></div>
+      <Sidebar expanded={sidebarExpanded} />
+
+      <div
+        className={`min-h-screen transition-all duration-300 ease-in-out ${
+          sidebarExpanded ? "ml-64" : "ml-20"
+        }`}
+      >
+        <main className="p-8 flex gap-8 max-w-7xl mx-auto">
+          {/* Left Sidebar - Book Cover */}
+          <div className="w-64 flex-shrink-0">
+            <div className="bg-[#232323] border-2 border-dashed border-[#454545] rounded-lg h-80 flex items-center justify-center mb-4 overflow-hidden relative group">
+              {coverPreview ? (
+                <>
+                  <img
+                    src={coverPreview}
+                    alt="Book cover"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        parent.innerHTML = '<div class="text-center text-gray-500"><div class="w-12 h-12 mx-auto mb-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div><p class="text-sm">Image failed to load</p></div>';
+                      }
+                    }}
+                  />
+                  <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                    <Upload className="w-8 h-8 text-white" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </>
+              ) : (
+                <label className="text-center text-gray-500 cursor-pointer">
+                  <ImagePlus className="w-12 h-12 mx-auto mb-2" />
+                  <p className="text-sm">Click to upload cover</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
+              {uploadingCover && (
+                <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                  <div className="text-white">Uploading...</div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleWriteHere}
+              disabled={loading}
+              className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-medium py-3 px-4 rounded-lg transition-colors mb-3 disabled:opacity-50"
+            >
+              {loading ? "Saving..." : "Write Here"}
+            </button>
+
+            <label className="w-full bg-[#2A2A2A] hover:bg-[#333333] text-white font-medium py-3 px-4 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2">
+              <Upload className="w-4 h-4" />
+              Upload File
+              <input
+                type="file"
+                accept=".pdf,.epub,.txt"
+                className="hidden"
+                onChange={() => alert("File upload feature coming soon!")}
+              />
+            </label>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1">
+            {error && (
+              <div className="bg-red-900/50 border border-red-500 text-white p-4 rounded-lg mb-6 flex items-center justify-between">
+                <span>{error}</span>
+                <button onClick={() => setError("")}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-6">
+              {/* Title with Clear Button */}
+              <div className="flex items-center gap-4">
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  className="flex-1 bg-transparent border-none text-white text-4xl font-bold placeholder-gray-600 focus:outline-none"
+                  placeholder="Title"
+                />
+                {formData.title && (
+                  <button
+                    onClick={() => {
+                      if (confirm("Clear all data and start a new book?")) {
+                        clearForm();
+                      }
+                    }}
+                    className="text-sm text-gray-400 hover:text-white transition-colors whitespace-nowrap"
+                  >
+                    Clear Form
+                  </button>
+                )}
+              </div>
+
+              {/* Subtitle */}
+              <div>
+                <input
+                  type="text"
+                  value={formData.subtitle}
+                  onChange={(e) =>
+                    setFormData({ ...formData, subtitle: e.target.value })
+                  }
+                  className="w-full bg-transparent border-none text-gray-400 text-2xl placeholder-gray-600 focus:outline-none"
+                  placeholder="Sub Title"
+                />
+              </div>
+
+              {/* Authors */}
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  {selectedAuthors.map((author) => (
+                    <div
+                      key={author.id}
+                      className="flex items-center gap-2 bg-[#2A2A2A] rounded-full px-4 py-2"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-gray-600 overflow-hidden flex items-center justify-center text-xs text-white">
+                        {author.authorName.charAt(0)}
+                      </div>
+                      <span className="text-white text-sm">
+                        {author.authorName}
+                      </span>
+                      {selectedAuthors.length > 1 && (
+                        <button
+                          onClick={() => handleRemoveAuthor(author.id)}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setShowAuthorModal(true)}
+                    className="flex items-center gap-2 text-gray-400 hover:text-white text-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Author
+                  </button>
+                </div>
+              </div>
+
+              {/* Language */}
+              <div className="flex items-center gap-3 relative">
+                <button
+                  onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                  className="flex items-center gap-2 text-white hover:text-gray-300"
+                >
+                  <span>{formData.language}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                
+                {showLanguageDropdown && (
+                  <div className="absolute top-full mt-2 bg-[#2A2A2A] border border-[#454545] rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                    {LANGUAGES.map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => {
+                          setFormData({ ...formData, language: lang });
+                          setShowLanguageDropdown(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-[#333333] hover:text-white flex items-center justify-between min-w-[150px]"
+                      >
+                        {lang}
+                        {formData.language === lang && (
+                          <Check className="w-4 h-4 text-[#8B5CF6]" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Synopsis */}
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">
+                  Synopsis
+                </label>
+                <textarea
+                  value={formData.synopsis}
+                  onChange={(e) =>
+                    setFormData({ ...formData, synopsis: e.target.value })
+                  }
+                  rows={4}
+                  className="w-full bg-[#232323] border border-[#454545] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] p-4"
+                  placeholder="Write a brief description of your book..."
+                />
+              </div>
+
+              {/* Tags/Genres */}
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {selectedGenres.map((genreId) => {
+                    const genre = genres.find((g) => g.id === genreId);
+                    return genre ? (
+                      <button
+                        key={genre.id}
+                        onClick={() => handleGenreToggle(genre.id)}
+                        className="px-4 py-2 rounded-lg text-sm bg-[#8B5CF6] text-white flex items-center gap-2"
+                      >
+                        {genre.genreName}
+                        <X className="w-3 h-3" />
+                      </button>
+                    ) : null;
+                  })}
+                  <button
+                    onClick={() => setShowGenreModal(true)}
+                    className="flex items-center gap-2 text-gray-400 hover:text-white text-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Tags
+                  </button>
+                </div>
+              </div>
+
+              {/* Book Cover URL Input */}
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">
+                  Book Cover URL (optional)
+                </label>
+                <input
+                  type="url"
+                  value={formData.bookCoverPath}
+                  onChange={handleCoverChange}
+                  className="w-full bg-[#232323] border border-[#454545] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] p-4"
+                  placeholder="https://example.com/cover.jpg"
+                />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Author Selection Modal */}
+      {showAuthorModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#232323] border border-[#454545] rounded-lg p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white text-lg font-bold">Select Author</h3>
+              <button
+                onClick={() => setShowAuthorModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {authors.map((author) => (
+                <button
+                  key={author.id}
+                  onClick={() => handleAddAuthor(author)}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gray-600 overflow-hidden flex-shrink-0 flex items-center justify-center text-white">
+                    {author.authorName.charAt(0)}
+                  </div>
+                  <span className="text-white">{author.authorName}</span>
+                  {selectedAuthors.find((a) => a.id === author.id) && (
+                    <Check className="w-5 h-5 text-[#8B5CF6] ml-auto" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Genre Selection Modal */}
+      {showGenreModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#232323] border border-[#454545] rounded-lg p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white text-lg font-bold">Select Genres</h3>
+              <button
+                onClick={() => setShowGenreModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {genres.map((genre) => (
+                <button
+                  key={genre.id}
+                  onClick={() => handleGenreToggle(genre.id)}
+                  className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                    selectedGenres.includes(genre.id)
+                      ? "bg-[#8B5CF6] text-white"
+                      : "hover:bg-[#2A2A2A] text-gray-300"
+                  }`}
+                >
+                  <span>{genre.genreName}</span>
+                  {selectedGenres.includes(genre.id) && (
+                    <Check className="w-5 h-5" />
+                  )}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowGenreModal(false)}
+              className="w-full mt-4 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

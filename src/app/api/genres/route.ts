@@ -1,39 +1,36 @@
-// API routes for Publishers
+// API routes for Genres
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET /api/publishers - Get all publishers
+// GET /api/genres - Get all genres
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const limit = parseInt(searchParams.get("limit") || "100");
     const offset = parseInt(searchParams.get("offset") || "0");
     const search = searchParams.get("search") || "";
 
     const where = search
       ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" as const } },
-            { contactEmail: { contains: search, mode: "insensitive" as const } },
-          ],
+          genreName: { contains: search, mode: "insensitive" as const },
         }
       : {};
 
-    const [publishers, total] = await Promise.all([
-      prisma.publisher.findMany({
+    const [genres, total] = await Promise.all([
+      prisma.genre.findMany({
         where,
         take: limit,
         skip: offset,
         orderBy: {
-          name: "asc",
+          genreName: "asc",
         },
       }),
-      prisma.publisher.count({ where }),
+      prisma.genre.count({ where }),
     ]);
 
     return NextResponse.json({
       success: true,
-      publishers,
+      genres,
       pagination: {
         total,
         limit,
@@ -42,7 +39,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching publishers:", error);
+    console.error("Error fetching genres:", error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -50,30 +47,28 @@ export async function GET(request: Request) {
   }
 }
 
-// POST /api/publishers - Create a new publisher
+// POST /api/genres - Create a new genre
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, contactEmail, website } = body;
+    const { genreName } = body;
 
-    if (!name) {
+    if (!genreName) {
       return NextResponse.json(
-        { success: false, error: "Publisher name is required" },
+        { success: false, error: "Genre name is required" },
         { status: 400 }
       );
     }
 
-    const publisher = await prisma.publisher.create({
+    const genre = await prisma.genre.create({
       data: {
-        name,
-        contactEmail,
-        website,
+        genreName,
       },
     });
 
-    return NextResponse.json({ success: true, publisher }, { status: 201 });
+    return NextResponse.json({ success: true, genre }, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating publisher:", error);
+    console.error("Error creating genre:", error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

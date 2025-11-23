@@ -9,15 +9,25 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const offset = parseInt(searchParams.get("offset") || "0");
     const search = searchParams.get("search") || "";
+    const userId = searchParams.get("userId");
 
-    const where = search
-      ? {
-          OR: [
-            { bookName: { contains: search, mode: "insensitive" as const } },
-            { description: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {};
+    const where = {
+      ...(search
+        ? {
+            OR: [
+              { bookName: { contains: search, mode: "insensitive" as const } },
+              { description: { contains: search, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+      ...(userId
+        ? {
+            author: {
+              userId: userId,
+            },
+          }
+        : {}),
+    };
 
     const [books, total] = await Promise.all([
       prisma.book.findMany({
@@ -25,7 +35,8 @@ export async function GET(request: Request) {
         take: limit,
         skip: offset,
         include: {
-          author: true, // Author of the book
+          author: true,
+          publishers: true,
           bookGenres: {
             include: {
               genre: true,
@@ -80,16 +91,62 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bookName, description, authorId, genreIds, publisherIds, ...rest } =
-      body;
+    const {
+      bookName,
+      description,
+      authorId,
+      genreIds,
+      isbn,
+      pageCount,
+      language,
+      price,
+      publicationDate,
+      status,
+      bookCoverPath,
+      userId, // Get userId from request
+    } = body;
+
+    // Find or create publisher for the user
+    let publisherId: string | undefined;
+    
+    if (userId) {
+      // Check if user already has a publisher
+      let publisher = await prisma.publisher.findUnique({
+        where: { user_id: userId },
+      });
+
+      // If not, create one
+      if (!publisher) {
+        // Get user's author info for publisher name
+        const author = await prisma.author.findUnique({
+          where: { userId: userId },
+        });
+
+        publisher = await prisma.publisher.create({
+          data: {
+            publisherName: author?.authorName || "Self-Published",
+            user_id: userId,
+          },
+        });
+      }
+
+      publisherId = publisher.id;
+    }
 
     // Create book with relations
     const book = await prisma.book.create({
       data: {
         bookName,
         description,
-        authorId,
-        ...rest,
+        author: authorId ? { connect: { id: authorId } } : undefined,
+        publishers: publisherId ? { connect: { id: publisherId } } : undefined,
+        isbn,
+        pageCount,
+        language,
+        price: price ? parseFloat(price) : undefined,
+        publicationDate,
+        status: status || "draft",
+        bookCoverPath,
         bookGenres: genreIds
           ? {
               create: genreIds.map((genreId: string) => ({
@@ -97,16 +154,17 @@ export async function POST(request: Request) {
               })),
             }
           : undefined,
-        bookPublishers: publisherIds
+        bookPublishers: publisherId
           ? {
-              create: publisherIds.map((publisherId: string) => ({
-                publisherId,
-              })),
+              create: [{
+                publisherId: publisherId,
+              }],
             }
           : undefined,
       },
       include: {
         author: true,
+        publishers: true,
         bookGenres: {
           include: {
             genre: true,
@@ -120,7 +178,20 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, book }, { status: 201 });
+    // Convert BigInt IDs to strings for JSON serialization
+    const bookWithConvertedIds = {
+      ...book,
+      bookGenres: book.bookGenres.map(bg => ({
+        ...bg,
+        id: bg.id.toString(),
+      })),
+      bookPublishers: book.bookPublishers.map(bp => ({
+        ...bp,
+        id: bp.id.toString(),
+      })),
+    };
+
+    return NextResponse.json({ success: true, book: bookWithConvertedIds }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating book:", error);
     return NextResponse.json(
