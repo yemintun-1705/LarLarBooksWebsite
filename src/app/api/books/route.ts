@@ -25,11 +25,15 @@ export async function GET(request: Request) {
         take: limit,
         skip: offset,
         include: {
-          user: true, // Author of the book
-          author: true, // Publisher
+          author: true, // Author of the book
           bookGenres: {
             include: {
               genre: true,
+            },
+          },
+          bookPublishers: {
+            include: {
+              publisher: true,
             },
           },
         },
@@ -40,9 +44,22 @@ export async function GET(request: Request) {
       prisma.book.count({ where }),
     ]);
 
+    // Convert BigInt IDs to strings for JSON serialization
+    const booksWithConvertedIds = books.map(book => ({
+      ...book,
+      bookGenres: book.bookGenres.map(bg => ({
+        ...bg,
+        id: bg.id.toString(),
+      })),
+      bookPublishers: book.bookPublishers.map(bp => ({
+        ...bp,
+        id: bp.id.toString(),
+      })),
+    }));
+
     return NextResponse.json({
       success: true,
-      books,
+      books: booksWithConvertedIds,
       pagination: {
         total,
         limit,
@@ -63,7 +80,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bookName, description, authorId, publisherId, genreIds, ...rest } =
+    const { bookName, description, authorId, genreIds, publisherIds, ...rest } =
       body;
 
     // Create book with relations
@@ -72,7 +89,6 @@ export async function POST(request: Request) {
         bookName,
         description,
         authorId,
-        publisherId,
         ...rest,
         bookGenres: genreIds
           ? {
@@ -81,13 +97,24 @@ export async function POST(request: Request) {
               })),
             }
           : undefined,
+        bookPublishers: publisherIds
+          ? {
+              create: publisherIds.map((publisherId: string) => ({
+                publisherId,
+              })),
+            }
+          : undefined,
       },
       include: {
-        user: true,
         author: true,
         bookGenres: {
           include: {
             genre: true,
+          },
+        },
+        bookPublishers: {
+          include: {
+            publisher: true,
           },
         },
       },

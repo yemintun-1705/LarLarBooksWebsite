@@ -65,7 +65,15 @@ export default function SignUpPage() {
         throw new Error(data.error || "Registration failed");
       }
 
-      // Sign in after successful registration
+      // Check if email confirmation is required
+      if (data.requiresEmailConfirmation) {
+        setError(data.message);
+        setIsLoading(false);
+        // Don't try to sign in - user needs to confirm email first
+        return;
+      }
+
+      // Sign in after successful registration (only if no email confirmation required)
       const signInResult = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
@@ -73,7 +81,9 @@ export default function SignUpPage() {
       });
 
       if (signInResult?.error) {
-        throw new Error("Registration successful, but sign in failed. Please sign in manually.");
+        setError("Registration successful! Please sign in manually.");
+        setIsLoading(false);
+        return;
       }
 
       // Redirect to home page

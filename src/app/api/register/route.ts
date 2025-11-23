@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcrypt";
+import { supabase } from "@/lib/supabase";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 
@@ -25,60 +25,70 @@ export async function POST(request: Request) {
     // Validate input
     const validatedData = registerSchema.parse(body);
 
-    // Check if user already exists
-    const existingProfile = await prisma.profile.findUnique({
-      where: {
-        email: validatedData.email,
+    // Create user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: validatedData.email,
+      password: validatedData.password,
+      options: {
+        data: {
+          full_name: validatedData.name,
+        },
+        emailRedirectTo: `${process.env.NEXTAUTH_URL}/auth/signin`,
       },
     });
 
-    if (existingProfile) {
+    if (authError) {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        { error: authError.message },
         { status: 400 }
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(validatedData.password, 12);
+    if (!authData.user) {
+      return NextResponse.json(
+        { error: "Failed to create user" },
+        { status: 500 }
+      );
+    }
 
-    // Generate UUIDs
-    const profileId = crypto.randomUUID();
-    const userId = crypto.randomUUID();
+    // Check if email confirmation is required
+    const emailConfirmationRequired = !authData.session;
 
-    // Create both profile (for auth) and user (for author/creator)
-    const [profile, user] = await prisma.$transaction([
-      // Create profile for authentication
-      prisma.profile.create({
-        data: {
-          id: profileId,
-          fullName: validatedData.name,
-          email: validatedData.email,
-          password: hashedPassword,
-        },
-      }),
-      // Create user for author/creator profile
-      prisma.user.create({
-        data: {
-          id: userId,
-          name: validatedData.name,
-          userId: profileId, // Link to the profile
-        },
-      }),
-    ]);
+    // Generate username from email (before @ symbol)
+    const username = validatedData.email.split('@')[0];
+
+    // Create profile with the same ID as the auth user
+    const profile = await prisma.profile.create({
+      data: {
+        id: authData.user.id,
+        email: validatedData.email,
+        fullName: validatedData.name,
+        username: username,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        username: true,
+        createdAt: true,
+      },
+    });
+
+    console.log("User and profile created successfully:", profile.id);
+
+    const message = emailConfirmationRequired
+      ? "Account created! Please check your email to confirm your account before signing in."
+      : "Account created successfully! You can now sign in.";
 
     return NextResponse.json(
       {
-        message: "User created successfully",
+        message,
+        requiresEmailConfirmation: emailConfirmationRequired,
         profile: {
           id: profile.id,
           fullName: profile.fullName,
           email: profile.email,
           createdAt: profile.createdAt,
-        },
-        user: {
-          id: user.id,
-          name: user.name,
         },
       },
       { status: 201 }
@@ -118,6 +128,7 @@ export async function POST(request: Request) {
     }
 
     console.error("Registration error:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
     return NextResponse.json(
       {
         error: "Something went wrong. Please try again.",

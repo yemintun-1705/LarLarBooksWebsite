@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
-import bcrypt from "bcrypt";
+import { supabase } from "./supabase";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -23,30 +23,32 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
-        const profile = await prisma.profile.findUnique({
-          where: {
-            email: credentials.email,
-          },
+        // Authenticate with Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
         });
 
-        if (!profile || !profile.password) {
+        if (authError || !authData.user) {
           throw new Error("Invalid credentials");
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          profile.password
-        );
+        // Get profile data
+        const profile = await prisma.profile.findUnique({
+          where: {
+            id: authData.user.id,
+          },
+        });
 
-        if (!isPasswordValid) {
-          throw new Error("Invalid credentials");
+        if (!profile) {
+          throw new Error("Profile not found");
         }
 
         return {
           id: profile.id,
-          email: profile.email,
-          name: profile.fullName || profile.username,
-          image: profile.avatarUrl,
+          email: profile.email || "",
+          name: profile.fullName || profile.username || "",
+          image: profile.avatarUrl || "",
         };
       },
     }),
