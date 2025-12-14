@@ -25,7 +25,7 @@ export async function GET(request: Request) {
         take: limit,
         skip: offset,
         orderBy: {
-          name: "asc",
+          publisherName: "asc",
         },
       }),
       prisma.publisher.count({ where }),
