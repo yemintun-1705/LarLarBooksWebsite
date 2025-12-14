@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useSidebar } from "@/components/providers/sidebar-provider";
 import Header from "@/components/ui/header";
@@ -37,10 +37,12 @@ const LANGUAGES = [
 
 export default function UploadBookPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const { expanded: sidebarExpanded, toggle } = useSidebar();
-  const bookId = searchParams.get("bookId");
+  
+  // ✅ SOLUTION 2: Get bookId from URL using client-side approach
+  const [bookId, setBookId] = useState<string | null>(null);
+  const [isLoadingParams, setIsLoadingParams] = useState(true);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -68,6 +70,14 @@ export default function UploadBookPage() {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [pdfPath, setPdfPath] = useState<string>("");
+
+  // ✅ Get bookId from URL after component mounts
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("bookId");
+    setBookId(id);
+    setIsLoadingParams(false);
+  }, []);
 
   // Load saved data from sessionStorage on mount (only if not editing existing book)
   useEffect(() => {
@@ -652,7 +662,8 @@ export default function UploadBookPage() {
     setCoverPreview("");
   };
 
-  if (status === "loading") {
+  // ✅ Show loading while getting URL params
+  if (isLoadingParams || status === "loading") {
     return (
       <div className="min-h-screen bg-[#181818] flex items-center justify-center text-white">
         Loading...
