@@ -6,7 +6,7 @@ import { Prisma } from '@prisma/client';
 // ============================================================================
 
 export type Profile = Prisma.ProfileGetPayload<{}>;
-export type User = Prisma.UserGetPayload<{}>;
+export type User = Prisma.userGetPayload<{}>;
 export type Author = Prisma.AuthorGetPayload<{}>;
 export type Publisher = Prisma.PublisherGetPayload<{}>;
 export type Genre = Prisma.GenreGetPayload<{}>;
