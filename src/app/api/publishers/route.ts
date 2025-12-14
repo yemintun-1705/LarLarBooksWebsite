@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const where = search
       ? {
           OR: [
-            { name: { contains: search, mode: "insensitive" as const } },
+            { publisherName: { contains: search, mode: "insensitive" as const } },
             { contactEmail: { contains: search, mode: "insensitive" as const } },
           ],
         }
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 
     const publisher = await prisma.publisher.create({
       data: {
-        name,
+        publisherName,
         contactEmail,
         website,
       },
