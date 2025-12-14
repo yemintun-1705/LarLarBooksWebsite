@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 
     const publisher = await prisma.publisher.create({
       data: {
-        publisherName,
+        publisher,
         contactEmail,
         website,
       },
