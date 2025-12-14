@@ -213,7 +213,7 @@ export default function WriteBookPage() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={handleSaveDraft}
+            onClick={() => handleSaveDraft()}
             disabled={saving}
             className="flex items-center gap-2 px-4 py-2 bg-[#2A2A2A] hover:bg-[#333333] text-white rounded-lg transition-colors disabled:opacity-50"
           >
