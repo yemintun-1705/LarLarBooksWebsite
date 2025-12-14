@@ -7,6 +7,7 @@ import { useSidebar } from "@/components/providers/sidebar-provider";
 import Header from "@/components/ui/header";
 import Sidebar from "@/components/ui/sidebar";
 import { PenLine, Layers } from "lucide-react";
+import { getBookCoverUrl } from "@/lib/r2";
 
 interface Book {
   id: string;
@@ -34,21 +35,38 @@ export default function BooksPage() {
   useEffect(() => {
     if (session?.user?.id) {
       fetchBooks();
+    } else if (session === null) {
+      // Session loaded but no user - set loading to false
+      setLoading(false);
     }
   }, [session]);
 
   const fetchBooks = async () => {
     try {
       setLoading(true);
+      if (!session?.user?.id) {
+        console.error("No user ID available");
+        setBooks([]);
+        return;
+      }
       // Fetch only the current user's books
-      const response = await fetch(`/api/books?limit=50&offset=0&userId=${session?.user?.id}`);
+      const response = await fetch(`/api/books?limit=50&offset=0&userId=${session.user.id}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
 
       if (data.success) {
         setBooks(data.books || []);
+      } else {
+        console.error("Failed to fetch books:", data.error);
+        setBooks([]);
       }
     } catch (err) {
       console.error("Error loading books:", err);
+      setBooks([]);
     } finally {
       setLoading(false);
     }
@@ -67,24 +85,27 @@ export default function BooksPage() {
         {/* Book Cover - Left Side */}
         <div className="flex-shrink-0 w-32">
           <div className="relative aspect-[2/3] bg-[#2A2A2A] rounded-lg overflow-hidden">
-            {book.bookCoverPath ? (
-              <img
-                src={book.bookCoverPath}
-                alt={book.bookName}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  const parent = e.currentTarget.parentElement;
-                  if (parent) {
-                    parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-bold">${book.bookName.charAt(0)}</div>`;
-                  }
-                }}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-bold">
-                {book.bookName.charAt(0)}
-              </div>
-            )}
+            {(() => {
+              const coverUrl = getBookCoverUrl(book.bookCoverPath);
+              return coverUrl ? (
+                <img
+                  src={coverUrl}
+                  alt={book.bookName}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-bold">${book.bookName.charAt(0)}</div>`;
+                    }
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-bold">
+                  {book.bookName.charAt(0)}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -123,23 +144,26 @@ export default function BooksPage() {
     <div className="group cursor-pointer flex-shrink-0 w-80">
       {/* Series Preview - Show multiple book covers side by side */}
       <div className="flex gap-2 mb-3">
-        {books.slice(0, 5).map((book, idx) => (
-          <div key={idx} className="flex-shrink-0 w-16">
-            <div className="relative aspect-[2/3] bg-[#2A2A2A] rounded-lg overflow-hidden">
-              {book.bookCoverPath ? (
-                <img
-                  src={book.bookCoverPath}
-                  alt={book.bookName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs font-bold">
-                  {book.bookName.charAt(0)}
-                </div>
-              )}
+        {books.slice(0, 5).map((book, idx) => {
+          const coverUrl = getBookCoverUrl(book.bookCoverPath);
+          return (
+            <div key={idx} className="flex-shrink-0 w-16">
+              <div className="relative aspect-[2/3] bg-[#2A2A2A] rounded-lg overflow-hidden">
+                {coverUrl ? (
+                  <img
+                    src={coverUrl}
+                    alt={book.bookName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs font-bold">
+                    {book.bookName.charAt(0)}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Series Info */}

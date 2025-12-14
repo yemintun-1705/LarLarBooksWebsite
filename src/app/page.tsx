@@ -6,6 +6,7 @@ import { useSidebar } from "@/components/providers/sidebar-provider";
 import Header from "@/components/ui/header";
 import Sidebar from "@/components/ui/sidebar";
 import { Star } from "lucide-react";
+import { getBookCoverUrl } from "@/lib/r2";
 
 interface Book {
   id: string;
@@ -37,14 +38,14 @@ const BookCover = ({
   textSize?: string;
 }) => {
   const [imageError, setImageError] = useState(false);
-  const hasValidCover =
-    bookCoverPath && bookCoverPath.trim() !== "" && !imageError;
+  const coverUrl = getBookCoverUrl(bookCoverPath);
+  const hasValidCover = coverUrl && !imageError;
 
   return (
     <>
       {hasValidCover ? (
         <img
-          src={bookCoverPath}
+          src={coverUrl}
           alt={bookName}
           className={className}
           onError={() => setImageError(true)}

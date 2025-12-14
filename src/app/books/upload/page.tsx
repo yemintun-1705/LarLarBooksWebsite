@@ -7,6 +7,7 @@ import { useSidebar } from "@/components/providers/sidebar-provider";
 import Header from "@/components/ui/header";
 import Sidebar from "@/components/ui/sidebar";
 import { ImagePlus, X, Plus, ChevronDown, Upload, Check } from "lucide-react";
+import { getBookCoverUrl } from "@/lib/r2";
 
 interface Genre {
   id: string;
@@ -65,6 +66,8 @@ export default function UploadBookPage() {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showGenreModal, setShowGenreModal] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [pdfPath, setPdfPath] = useState<string>("");
 
   // Load saved data from sessionStorage on mount (only if not editing existing book)
   useEffect(() => {
@@ -167,8 +170,21 @@ export default function UploadBookPage() {
           bookCoverPath: book.bookCoverPath || "",
         });
 
-        if (book.bookCoverPath) {
-          setCoverPreview(book.bookCoverPath);
+        if (book.bookCoverPath && book.bookCoverPath.trim() !== "") {
+          const path = book.bookCoverPath.trim();
+          // Only set preview if it's a valid path (not a placeholder that might not exist)
+          // Skip paths that look like placeholders (e.g., "untitled-book.jpg" without timestamp)
+          const isPlaceholder =
+            path.includes("untitled-book") && !path.match(/\d{13}/); // Check for timestamp
+          if (!isPlaceholder) {
+            const coverUrl = getBookCoverUrl(book.bookCoverPath);
+            if (coverUrl) {
+              setCoverPreview(coverUrl);
+            }
+          } else {
+            // Clear invalid placeholder path
+            setFormData({ ...formData, bookCoverPath: "" });
+          }
         }
 
         // Set selected genres
@@ -303,9 +319,64 @@ export default function UploadBookPage() {
     setCoverPreview(url);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     // Don't allow upload if book is published
     if (isPublished) {
+      e.target.value = ""; // Reset file input
+      return;
+    }
+
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.includes("pdf")) {
+      setError("Please upload a PDF file");
+      e.target.value = ""; // Reset file input
+      return;
+    }
+
+    setUploadingPdf(true);
+    setError("");
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+      if (bookId) {
+        uploadFormData.append("bookId", bookId);
+      }
+      uploadFormData.append("bookName", formData.title || "Untitled Book");
+
+      const uploadResponse = await fetch("/api/upload/pdf", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      const uploadData = await uploadResponse.json();
+
+      if (uploadData.success) {
+        setPdfPath(uploadData.path);
+
+        // Auto-save and publish the book when PDF is uploaded
+        await handleAutoPublishWithPdf(uploadData.path);
+      } else {
+        throw new Error(uploadData.error || "Failed to upload PDF");
+      }
+    } catch (err) {
+      console.error("Error uploading PDF:", err);
+      setError(err instanceof Error ? err.message : "Failed to upload PDF");
+      setPdfPath("");
+    } finally {
+      setUploadingPdf(false);
+      e.target.value = ""; // Reset file input
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Allow image uploads even if PDF is uploaded (cover can be changed)
+    // Only block if book is manually published via "Write Here" button
+    // We check if it's published AND has no PDF (meaning it was published via Write Here)
+    if (isPublished && !pdfPath) {
       e.target.value = ""; // Reset file input
       return;
     }
@@ -334,6 +405,7 @@ export default function UploadBookPage() {
             },
             body: JSON.stringify({
               dataUrl: dataUrl,
+              bookName: formData.title || "Untitled Book",
               filename: file.name,
             }),
           });
@@ -341,9 +413,12 @@ export default function UploadBookPage() {
           const uploadData = await uploadResponse.json();
 
           if (uploadData.success) {
-            // Store the R2 public URL instead of base64
-            setFormData({ ...formData, bookCoverPath: uploadData.url });
-            setCoverPreview(uploadData.url);
+            // Store only the path (e.g., "book-covers/my-book.jpg")
+            const coverPath = uploadData.path;
+            setFormData({ ...formData, bookCoverPath: coverPath });
+            // For preview, construct the full URL
+            const previewUrl = `https://pub-2bfaf8b6468e4b76ac7209e67f8b0fba.r2.dev/${coverPath}`;
+            setCoverPreview(previewUrl);
           } else {
             throw new Error(uploadData.error || "Failed to upload cover");
           }
@@ -368,6 +443,93 @@ export default function UploadBookPage() {
       console.error("Error reading file:", err);
       setError("Failed to read file");
       setUploadingCover(false);
+    }
+  };
+
+  const handleAutoPublishWithPdf = async (pdfPathValue: string) => {
+    if (!formData.title) {
+      setError("Please enter a book title first");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      // Get all author IDs from selected authors
+      const authorIds =
+        selectedAuthors.length > 0
+          ? selectedAuthors.map((a) => a.id)
+          : userAuthorId
+          ? [userAuthorId]
+          : [];
+
+      const bookData = {
+        bookName: formData.title,
+        description: formData.synopsis,
+        subtitle: formData.subtitle,
+        language: formData.language,
+        status: "published", // Auto-publish when PDF is uploaded
+        bookCoverPath: formData.bookCoverPath,
+        authorIds: authorIds,
+        genreIds: selectedGenres,
+        userId: session?.user?.id,
+        pdfPath: pdfPathValue,
+      };
+
+      // If editing existing book, use PATCH
+      if (bookId) {
+        const response = await fetch(`/api/books/${bookId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bookName: bookData.bookName,
+            description: bookData.description,
+            subtitle: bookData.subtitle,
+            language: bookData.language,
+            bookCoverPath: bookData.bookCoverPath,
+            authorIds: bookData.authorIds,
+            genreIds: bookData.genreIds,
+            status: "published", // Auto-publish
+            pdfPath: pdfPathValue,
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setIsPublished(true);
+          setBookStatus("published");
+        } else {
+          setError(data.error || "Failed to publish book");
+        }
+      } else {
+        // Creating new book
+        const response = await fetch("/api/books", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...bookData,
+            pdfPath: pdfPathValue,
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setIsPublished(true);
+          setBookStatus("published");
+          // Update bookId so the book can be edited later
+          if (data.book?.id) {
+            router.replace(`/books/upload?bookId=${data.book.id}`);
+          }
+        } else {
+          setError(data.error || "Failed to publish book");
+        }
+      }
+    } catch (err) {
+      console.error("Error auto-publishing book:", err);
+      setError(err instanceof Error ? err.message : "Failed to publish book");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -437,6 +599,7 @@ export default function UploadBookPage() {
             authorIds: bookData.authorIds,
             genreIds: bookData.genreIds,
             status: "draft",
+            ...(pdfPath && { pdfPath: pdfPath }),
           }),
         });
 
@@ -451,7 +614,10 @@ export default function UploadBookPage() {
         const response = await fetch("/api/books", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(bookData),
+          body: JSON.stringify({
+            ...bookData,
+            ...(pdfPath && { pdfPath: pdfPath }),
+          }),
         });
 
         const data = await response.json();
@@ -521,6 +687,9 @@ export default function UploadBookPage() {
                     alt="Book cover"
                     className="w-full h-full object-cover"
                     onError={(e) => {
+                      // Clear invalid cover path to prevent 404 loops
+                      setCoverPreview("");
+                      setFormData((prev) => ({ ...prev, bookCoverPath: "" }));
                       e.currentTarget.style.display = "none";
                       const parent = e.currentTarget.parentElement;
                       if (parent) {
@@ -529,7 +698,7 @@ export default function UploadBookPage() {
                       }
                     }}
                   />
-                  {!isPublished && (
+                  {(!isPublished || pdfPath) && (
                     <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                       <Upload className="w-8 h-8 text-white" />
                       <input
@@ -542,7 +711,7 @@ export default function UploadBookPage() {
                   )}
                 </>
               ) : (
-                !isPublished && (
+                (!isPublished || pdfPath) && (
                   <label className="text-center text-gray-500 cursor-pointer">
                     <ImagePlus className="w-12 h-12 mx-auto mb-2" />
                     <p className="text-sm">Click to upload cover</p>
@@ -562,7 +731,7 @@ export default function UploadBookPage() {
               )}
             </div>
 
-            {!isPublished && (
+            {!isPublished && !pdfPath && (
               <button
                 onClick={handleWriteHere}
                 disabled={loading}
@@ -572,16 +741,28 @@ export default function UploadBookPage() {
               </button>
             )}
 
-            <label className="w-full bg-[#2A2A2A] hover:bg-[#333333] text-white font-medium py-3 px-4 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2">
+            {pdfPath && (
+              <div className="w-full bg-green-900/50 border border-green-500 text-green-400 p-3 rounded-lg mb-3 text-sm">
+                ✓ PDF uploaded - Book will be published automatically
+              </div>
+            )}
+
+            <label className="w-full bg-[#2A2A2A] hover:bg-[#333333] text-white font-medium py-3 px-4 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
               <Upload className="w-4 h-4" />
-              Upload File
+              {uploadingPdf ? "Uploading PDF..." : "Upload PDF"}
               <input
                 type="file"
-                accept=".pdf,.epub,.txt"
+                accept=".pdf"
                 className="hidden"
-                onChange={() => alert("File upload feature coming soon!")}
+                disabled={isPublished || uploadingPdf}
+                onChange={handlePdfUpload}
               />
             </label>
+            {pdfPath && (
+              <div className="mt-2 text-sm text-green-400">
+                ✓ PDF uploaded successfully
+              </div>
+            )}
           </div>
 
           {/* Main Content Area */}

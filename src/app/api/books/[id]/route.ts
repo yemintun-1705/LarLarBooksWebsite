@@ -50,23 +50,73 @@ export async function GET(
     // Convert BigInt IDs to strings and extract authors
     const bookWithConvertedIds = {
       ...book,
+      id: book.id.toString(),
       chapters, // Add chapters to the response
       authors:
-        book.bookAuthors?.map((ba) => ba.author) ||
-        (book.author ? [book.author] : []),
+        book.bookAuthors?.map((ba) =>
+          ba.author
+            ? {
+                ...ba.author,
+                id: ba.author.id.toString(),
+              }
+            : null
+        ) ||
+        (book.author
+          ? [
+              {
+                ...book.author,
+                id: book.author.id.toString(),
+              },
+            ]
+          : []),
       bookGenres: book.bookGenres.map((bg) => ({
         ...bg,
         id: bg.id.toString(),
+        genre: bg.genre
+          ? {
+              ...bg.genre,
+              id: bg.genre.id.toString(),
+            }
+          : null,
       })),
       bookPublishers: book.bookPublishers.map((bp) => ({
         ...bp,
         id: bp.id.toString(),
+        publisher: bp.publisher
+          ? {
+              ...bp.publisher,
+              id: bp.publisher.id.toString(),
+            }
+          : null,
       })),
       bookAuthors:
         book.bookAuthors?.map((ba) => ({
           ...ba,
           id: ba.id.toString(),
+          author: ba.author
+            ? {
+                ...ba.author,
+                id: ba.author.id.toString(),
+              }
+            : null,
         })) || [],
+      author: book.author
+        ? {
+            ...book.author,
+            id: book.author.id.toString(),
+          }
+        : null,
+      bookContent: book.bookContent
+        ? {
+            ...book.bookContent,
+            id: book.bookContent.id.toString(),
+            bookId: book.bookContent.bookId
+              ? book.bookContent.bookId.toString()
+              : null,
+            pdfPath: book.bookContent.pdfPath,
+            contentType: book.bookContent.contentType,
+          }
+        : null,
     };
 
     return NextResponse.json({ success: true, book: bookWithConvertedIds });
@@ -97,6 +147,7 @@ export async function PATCH(
       authorId,
       authorIds,
       genreIds,
+      pdfPath,
     } = body;
 
     console.log("PATCH request body:", {
@@ -184,10 +235,53 @@ export async function PATCH(
       console.log("No chapters provided or chapters is not an array");
     }
 
+    // Handle PDF upload if provided
+    if (pdfPath !== undefined && pdfPath !== null && pdfPath !== "") {
+      console.log(`Saving PDF for book ${id}: ${pdfPath}`);
+      try {
+        // Find or create BookContent record for PDF
+        const existingContent = await prisma.bookContent.findFirst({
+          where: {
+            bookId: id,
+            contentType: "pdf",
+          },
+        });
+
+        if (existingContent) {
+          // Update existing PDF content
+          await prisma.bookContent.update({
+            where: { id: existingContent.id },
+            data: {
+              pdfPath: pdfPath,
+            },
+          });
+          console.log(`Updated existing PDF content record`);
+        } else {
+          // Create new PDF content
+          await prisma.bookContent.create({
+            data: {
+              bookId: id,
+              contentType: "pdf",
+              pdfPath: pdfPath,
+            },
+          });
+          console.log(`Created new PDF content record`);
+        }
+      } catch (error) {
+        console.error("Error saving PDF to database:", error);
+      }
+    }
+
     // Prepare update data
     const updateData: any = {};
 
-    if (status !== undefined) updateData.status = status;
+    // If PDF is uploaded and status is not explicitly set, auto-publish
+    if (pdfPath !== undefined && pdfPath !== null && pdfPath !== "" && status === undefined) {
+      updateData.status = "published";
+      console.log(`Auto-publishing book ${id} due to PDF upload`);
+    } else if (status !== undefined) {
+      updateData.status = status;
+    }
     if (bookName !== undefined) updateData.bookName = bookName;
     if (subtitle !== undefined) updateData.subtitle = subtitle;
     if (description !== undefined) updateData.description = description;
@@ -286,22 +380,72 @@ export async function PATCH(
     // Convert BigInt IDs to strings and extract authors
     const bookWithConvertedIds = {
       ...book,
+      id: book.id.toString(),
       authors:
-        book.bookAuthors?.map((ba) => ba.author) ||
-        (book.author ? [book.author] : []),
+        book.bookAuthors?.map((ba) =>
+          ba.author
+            ? {
+                ...ba.author,
+                id: ba.author.id.toString(),
+              }
+            : null
+        ) ||
+        (book.author
+          ? [
+              {
+                ...book.author,
+                id: book.author.id.toString(),
+              },
+            ]
+          : []),
       bookGenres: book.bookGenres.map((bg) => ({
         ...bg,
         id: bg.id.toString(),
+        genre: bg.genre
+          ? {
+              ...bg.genre,
+              id: bg.genre.id.toString(),
+            }
+          : null,
       })),
       bookPublishers: book.bookPublishers.map((bp) => ({
         ...bp,
         id: bp.id.toString(),
+        publisher: bp.publisher
+          ? {
+              ...bp.publisher,
+              id: bp.publisher.id.toString(),
+            }
+          : null,
       })),
       bookAuthors:
         book.bookAuthors?.map((ba) => ({
           ...ba,
           id: ba.id.toString(),
+          author: ba.author
+            ? {
+                ...ba.author,
+                id: ba.author.id.toString(),
+              }
+            : null,
         })) || [],
+      author: book.author
+        ? {
+            ...book.author,
+            id: book.author.id.toString(),
+          }
+        : null,
+      bookContent: book.bookContent
+        ? {
+            ...book.bookContent,
+            id: book.bookContent.id.toString(),
+            bookId: book.bookContent.bookId
+              ? book.bookContent.bookId.toString()
+              : null,
+            pdfPath: book.bookContent.pdfPath,
+            contentType: book.bookContent.contentType,
+          }
+        : null,
     };
 
     return NextResponse.json({ success: true, book: bookWithConvertedIds });

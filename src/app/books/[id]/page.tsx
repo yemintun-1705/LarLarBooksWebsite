@@ -16,6 +16,7 @@ import {
   Star,
   ChevronDown,
 } from "lucide-react";
+import { getBookCoverUrl } from "@/lib/r2";
 
 interface Book {
   id: string;
@@ -106,17 +107,20 @@ export default function BookDetailPage() {
             <div className="flex-shrink-0 w-80">
               {/* Book Cover */}
               <div className="relative aspect-[2/3] bg-[#2A2A2A] rounded-lg overflow-hidden mb-6">
-                {book.bookCoverPath ? (
-                  <img
-                    src={book.bookCoverPath}
-                    alt={book.bookName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-4xl font-bold">
-                    {book.bookName.charAt(0)}
-                  </div>
-                )}
+                {(() => {
+                  const coverUrl = getBookCoverUrl(book.bookCoverPath);
+                  return coverUrl ? (
+                    <img
+                      src={coverUrl}
+                      alt={book.bookName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-4xl font-bold">
+                      {book.bookName.charAt(0)}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Read Button */}

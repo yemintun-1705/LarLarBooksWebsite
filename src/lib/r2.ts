@@ -24,6 +24,40 @@ const PUBLIC_URL =
   "https://pub-2bfaf8b6468e4b76ac7209e67f8b0fba.r2.dev";
 
 /**
+ * Get the full public URL from a book cover path
+ * @param path - Book cover path (e.g., "book-covers/my-book.jpg")
+ * @returns Full public URL or null if path is invalid
+ */
+export function getBookCoverUrl(path: string | null | undefined): string | null {
+  if (!path || path.trim() === "") return null;
+  
+  // If it's already a full URL, return as is (for backward compatibility)
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+  
+  // Construct full URL from path
+  return `${PUBLIC_URL}/${path}`;
+}
+
+/**
+ * Get the full public URL from a PDF path
+ * @param path - PDF path (e.g., "book-content/my-book.pdf")
+ * @returns Full public URL or null if path is invalid
+ */
+export function getPdfUrl(path: string | null | undefined): string | null {
+  if (!path || path.trim() === "") return null;
+  
+  // If it's already a full URL, return as is (for backward compatibility)
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+  
+  // Construct full URL from path
+  return `${PUBLIC_URL}/${path}`;
+}
+
+/**
  * Upload a file to Cloudflare R2
  * @param file - File buffer or Uint8Array
  * @param key - Object key (path) in the bucket
@@ -142,19 +176,30 @@ export async function getPresignedUrl(
 
 /**
  * Generate a unique key for a book cover
- * @param bookId - Book ID
+ * @param bookName - Book name
  * @param filename - Original filename (optional)
  * @returns Unique key for the cover
  */
 export function generateBookCoverKey(
-  bookId: string,
+  bookName: string,
   filename?: string
 ): string {
-  const timestamp = Date.now();
+  // Sanitize book name: remove special characters, replace spaces with hyphens, lowercase
+  const sanitizedName = bookName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "") // Remove special characters except spaces and hyphens
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+
+  // If sanitized name is empty, use a fallback
+  const finalName = sanitizedName || "book";
+
   const extension = filename
     ? filename.split(".").pop()?.toLowerCase() || "jpg"
     : "jpg";
-  return `book-covers/${bookId}-${timestamp}.${extension}`;
+  return `book-covers/${finalName}.${extension}`;
 }
 
 /**

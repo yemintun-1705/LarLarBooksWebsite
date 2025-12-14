@@ -11,6 +11,8 @@ import {
   BookOpen,
   Download,
 } from "lucide-react";
+import { getBookCoverUrl, getPdfUrl } from "@/lib/r2";
+import PDFReader from "@/components/pdf/PDFReader";
 
 interface Chapter {
   id: string;
@@ -28,6 +30,8 @@ export default function ReadBookPage() {
   const [bookCoverPath, setBookCoverPath] = useState("");
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
+  const [pdfPath, setPdfPath] = useState<string | null>(null);
+  const [contentType, setContentType] = useState<"json" | "pdf" | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notesPanelOpen, setNotesPanelOpen] = useState(false);
   const [fontSize, setFontSize] = useState<"small" | "medium" | "large">(
@@ -54,9 +58,18 @@ export default function ReadBookPage() {
       if (data.success && data.book) {
         setBookTitle(data.book.bookName || "");
         setBookCoverPath(data.book.bookCoverPath || "");
-        if (data.book.chapters && data.book.chapters.length > 0) {
+        
+        // Check if book has PDF content
+        if (data.book.bookContent?.pdfPath && data.book.bookContent?.contentType === "pdf") {
+          setPdfPath(data.book.bookContent.pdfPath);
+          setContentType("pdf");
+        } else if (data.book.chapters && data.book.chapters.length > 0) {
+          // Use JSON chapters
           setChapters(data.book.chapters);
           setCurrentChapterIndex(0);
+          setContentType("json");
+        } else {
+          setContentType(null);
         }
       }
     } catch (error) {
@@ -144,17 +157,20 @@ export default function ReadBookPage() {
           }`}
         >
           <div className="w-22 h-22 rounded-full bg-[#221f20] flex items-center justify-center overflow-hidden mt-13">
-            {bookCoverPath ? (
-              <img
-                src={bookCoverPath}
-                alt={bookTitle}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-[#eeeeee] text-xs font-semibold text-center px-2 line-clamp-1">
-                {bookTitle || "Book"}
-              </span>
-            )}
+            {(() => {
+              const coverUrl = getBookCoverUrl(bookCoverPath);
+              return coverUrl ? (
+                <img
+                  src={coverUrl}
+                  alt={bookTitle}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-[#eeeeee] text-xs font-semibold text-center px-2 line-clamp-1">
+                  {bookTitle || "Book"}
+                </span>
+              );
+            })()}
           </div>
         </div>
 
@@ -194,37 +210,45 @@ export default function ReadBookPage() {
       <div className="flex">
         {/* Reading Content */}
         <div
-          className={`flex-1 transition-all duration-300 pb-32 ${
+          className={`flex-1 transition-all duration-300 ${
+            contentType === "pdf" ? "pb-0" : "pb-32"
+          } ${
             menuOpen ? "mr-80" : notesPanelOpen ? "mr-96" : "mr-0"
           }`}
         >
-          <div className="max-w-4xl mx-auto px-6 py-8">
-            {currentChapter ? (
-              <>
-                {/* Chapter Content - No title/subtitle here */}
-                <div
-                  className={`prose max-w-none ${getFontSizeClass()} ${
-                    theme === "focus" || theme === "calm"
-                      ? "text-[#eeeeee] prose-invert reading-content-white"
-                      : theme === "thic" || theme === "light"
-                      ? "text-gray-900"
-                      : "text-[#eeeeee] reading-content-white"
-                  }`}
-                  dangerouslySetInnerHTML={{ __html: currentChapter.content }}
-                  style={{
-                    color:
-                      theme === "thic" || theme === "light"
-                        ? "#111827 !important"
-                        : "#eeeeee !important", // White for focus, calm, and default
-                  }}
-                />
-              </>
-            ) : (
-              <div className="text-center py-20">
-                <p className={themeColors.text}>No chapters available</p>
-              </div>
-            )}
-          </div>
+          {contentType === "pdf" && pdfPath ? (
+            <div className="h-[calc(100vh-57px)]">
+              <PDFReader pdfUrl={getPdfUrl(pdfPath) || ""} />
+            </div>
+          ) : (
+            <div className="max-w-4xl mx-auto px-6 py-8">
+              {currentChapter ? (
+                <>
+                  {/* Chapter Content - No title/subtitle here */}
+                  <div
+                    className={`prose max-w-none ${getFontSizeClass()} ${
+                      theme === "focus" || theme === "calm"
+                        ? "text-[#eeeeee] prose-invert reading-content-white"
+                        : theme === "thic" || theme === "light"
+                        ? "text-gray-900"
+                        : "text-[#eeeeee] reading-content-white"
+                    }`}
+                    dangerouslySetInnerHTML={{ __html: currentChapter.content }}
+                    style={{
+                      color:
+                        theme === "thic" || theme === "light"
+                          ? "#111827 !important"
+                          : "#eeeeee !important", // White for focus, calm, and default
+                    }}
+                  />
+                </>
+              ) : (
+                <div className="text-center py-20">
+                  <p className={themeColors.text}>No content available</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Notes N' Highlights Panel */}

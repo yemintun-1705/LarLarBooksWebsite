@@ -24,9 +24,24 @@ export async function GET(request: Request) {
         : {}),
       ...(userId
         ? {
-            author: {
-              userId: userId,
-            },
+            OR: [
+              // Check direct author relation (backward compatibility)
+              {
+                author: {
+                  userId: userId,
+                },
+              },
+              // Check multiple authors through bookAuthors
+              {
+                bookAuthors: {
+                  some: {
+                    author: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            ],
           }
         : {}),
     };
@@ -38,6 +53,11 @@ export async function GET(request: Request) {
         skip: offset,
         include: {
           author: true,
+          bookAuthors: {
+            include: {
+              author: true,
+            },
+          },
           publishers: true,
           bookGenres: {
             include: {
@@ -60,14 +80,43 @@ export async function GET(request: Request) {
     // Convert BigInt IDs to strings for JSON serialization
     const booksWithConvertedIds = books.map((book) => ({
       ...book,
+      id: book.id.toString(),
+      bookAuthors: book.bookAuthors?.map((ba) => ({
+        ...ba,
+        id: ba.id.toString(),
+        author: ba.author
+          ? {
+              ...ba.author,
+              id: ba.author.id.toString(),
+            }
+          : null,
+      })) || [],
       bookGenres: book.bookGenres.map((bg) => ({
         ...bg,
         id: bg.id.toString(),
+        genre: bg.genre
+          ? {
+              ...bg.genre,
+              id: bg.genre.id.toString(),
+            }
+          : null,
       })),
       bookPublishers: book.bookPublishers.map((bp) => ({
         ...bp,
         id: bp.id.toString(),
+        publisher: bp.publisher
+          ? {
+              ...bp.publisher,
+              id: bp.publisher.id.toString(),
+            }
+          : null,
       })),
+      author: book.author
+        ? {
+            ...book.author,
+            id: book.author.id.toString(),
+          }
+        : null,
     }));
 
     return NextResponse.json({
@@ -107,6 +156,7 @@ export async function POST(request: Request) {
       publicationDate,
       status,
       bookCoverPath,
+      pdfPath,
       userId, // Get userId for request
     } = body;
 
@@ -208,17 +258,81 @@ export async function POST(request: Request) {
       },
     });
 
+    // Handle PDF upload if provided
+    if (pdfPath !== undefined && pdfPath !== null && pdfPath !== "") {
+      console.log(`Saving PDF for new book: ${pdfPath}`);
+      try {
+        // Create BookContent record for PDF
+        await prisma.bookContent.create({
+          data: {
+            bookId: book.id,
+            contentType: "pdf",
+            pdfPath: pdfPath,
+          },
+        });
+        console.log(`Created PDF content record for new book`);
+        
+        // Auto-publish the book when PDF is uploaded (if status is not explicitly set)
+        if (!status || status === "draft") {
+          await prisma.book.update({
+            where: { id: book.id },
+            data: { status: "published" },
+          });
+          console.log(`Auto-publishing new book ${book.id} due to PDF upload`);
+          // Update the book object for response
+          book.status = "published";
+        }
+      } catch (error) {
+        console.error("Error saving PDF to database:", error);
+      }
+    }
+
     // Convert BigInt IDs to strings for JSON serialization
     const bookWithConvertedIds = {
       ...book,
+      id: book.id.toString(),
+      bookAuthors: book.bookAuthors.map((ba) => ({
+        ...ba,
+        id: ba.id.toString(),
+        author: ba.author
+          ? {
+              ...ba.author,
+              id: ba.author.id.toString(),
+            }
+          : null,
+      })),
       bookGenres: book.bookGenres.map((bg) => ({
         ...bg,
         id: bg.id.toString(),
+        genre: bg.genre
+          ? {
+              ...bg.genre,
+              id: bg.genre.id.toString(),
+            }
+          : null,
       })),
       bookPublishers: book.bookPublishers.map((bp) => ({
         ...bp,
         id: bp.id.toString(),
+        publisher: bp.publisher
+          ? {
+              ...bp.publisher,
+              id: bp.publisher.id.toString(),
+            }
+          : null,
       })),
+      author: book.author
+        ? {
+            ...book.author,
+            id: book.author.id.toString(),
+          }
+        : null,
+      publishers: book.publishers
+        ? {
+            ...book.publishers,
+            id: book.publishers.id.toString(),
+          }
+        : null,
     };
 
     return NextResponse.json(

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { dataUrl, bookId, filename } = body;
+    const { dataUrl, bookName, filename } = body;
 
     if (!dataUrl) {
       return NextResponse.json(
@@ -24,16 +24,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a unique key for the cover
-    const key = generateBookCoverKey(bookId || `temp-${Date.now()}`, filename);
+    if (!bookName || bookName.trim() === "") {
+      return NextResponse.json(
+        { success: false, error: "Book name is required" },
+        { status: 400 }
+      );
+    }
+
+    // Generate a unique key for the cover using book name
+    const key = generateBookCoverKey(bookName.trim(), filename);
 
     // Upload to R2
-    const publicUrl = await uploadBase64ToR2(dataUrl, key);
+    await uploadBase64ToR2(dataUrl, key);
 
+    // Return only the path (key), not the full URL
     return NextResponse.json({
       success: true,
-      url: publicUrl,
-      key: key,
+      path: key, // Return just the path like "book-covers/my-book.jpg"
     });
   } catch (error) {
     console.error("Error uploading cover to R2:", error);
