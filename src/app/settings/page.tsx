@@ -411,9 +411,9 @@ export default function SettingsPage() {
   return (
     <div className="flex min-h-screen bg-[#181818]">
       {/* Sidebar */}
-      <div className="w-60 bg-[#181818] border-r border-[#1a1a1a] flex flex-col">
-        <div className="p-4">
-          <div className="flex items-center space-x-2 mb-4">
+      <div className="w-80 bg-[#181818] border-r border-[#1a1a1a] flex flex-col">
+        <div className="p-5">
+          <div className="flex items-center space-x-3 mb-5">
             <button
               onClick={() => router.back()}
               className="text-[#9d6db8] hover:text-[#eeeeee] transition-colors"
@@ -425,22 +425,22 @@ export default function SettingsPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#9d6db8]" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9d6db8]" />
             <input
               type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-[#211f20] text-[#eeeeee] text-sm rounded-md border border-[#1a1a1a] placeholder-[#6B7280] focus:outline-none focus:border-[#2a2a2a]"
+              className="w-full pl-10 pr-3 py-2.5 bg-[#211f20] text-[#eeeeee] text-sm rounded-md border border-[#1a1a1a] placeholder-[#6B7280] focus:outline-none focus:border-[#2a2a2a]"
             />
           </div>
         </div>
 
         {/* Menu Items */}
-        <div className="flex-1 overflow-y-auto px-3">
+        <div className="flex-1 overflow-y-auto px-4">
           {menuItems.map((section) => (
             <div key={section.category} className="mb-5">
-              <h3 className="px-2 mb-2 text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider">
+              <h3 className="px-3 mb-2.5 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                 {section.category}
               </h3>
               <div className="space-y-0.5">
@@ -451,14 +451,14 @@ export default function SettingsPage() {
                     <button
                       key={item.id}
                       onClick={() => setActiveSection(item.id)}
-                      className={`w-full flex items-center px-2 py-2 text-sm rounded-md transition-colors ${
+                      className={`w-full flex items-center px-3 py-2.5 text-sm rounded-md transition-colors ${
                         isActive
                           ? "bg-[#67377e] text-[#eeeeee]"
                           : "text-[#eeeeee] hover:bg-[#211f20]"
                       }`}
                     >
                       <Icon
-                        className={`w-4 h-4 mr-2.5 flex-shrink-0 ${
+                        className={`w-5 h-5 mr-2.5 flex-shrink-0 ${
                           isActive ? "text-[#9d6db8]" : "text-[#9d6db8]"
                         }`}
                       />
@@ -472,12 +472,12 @@ export default function SettingsPage() {
         </div>
 
         {/* Log out button */}
-        <div className="p-3 border-t border-[#1a1a1a]">
+        <div className="p-4 border-t border-[#1a1a1a]">
           <button
             onClick={() => router.push("/api/auth/signout")}
-            className="w-full flex items-center px-2 py-2 text-sm text-[#eeeeee] hover:bg-[#211f20] rounded-md transition-colors"
+            className="w-full flex items-center px-3 py-2.5 text-sm text-[#eeeeee] hover:bg-[#211f20] rounded-md transition-colors"
           >
-            <LogOut className="w-4 h-4 mr-2.5 text-[#9d6db8]" />
+            <LogOut className="w-5 h-5 mr-2.5 text-[#9d6db8]" />
             <span className="text-xs">Log out</span>
           </button>
         </div>
@@ -523,18 +523,18 @@ function AccountSecurityContent({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-[#eeeeee] mb-1">
+        <h2 className="text-2xl font-bold text-[#eeeeee] mb-1.5">
           Account & Security
         </h2>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {/* Email */}
         <div
           onClick={() => onNavigate("email")}
           className="group flex items-center justify-between p-4 bg-[#221f20] rounded-lg border border-[#1a1a1a] hover:border-[#2a2a2a] transition-colors cursor-pointer"
         >
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <Mail className="w-5 h-5 text-[#9d6db8]" />
             <p className="text-sm font-medium text-[#eeeeee]">Email</p>
           </div>
@@ -548,7 +548,7 @@ function AccountSecurityContent({
           onClick={() => onNavigate("phone")}
           className="group flex items-center justify-between p-4 bg-[#221f20] rounded-lg border border-[#1a1a1a] hover:border-[#2a2a2a] transition-colors cursor-pointer"
         >
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3.5">
             <Phone className="w-5 h-5 text-[#9d6db8]" />
             <p className="text-sm font-medium text-[#eeeeee]">Phone</p>
           </div>
@@ -562,7 +562,7 @@ function AccountSecurityContent({
           onClick={() => onNavigate("security")}
           className="group flex items-center justify-between p-4 bg-[#221f20] rounded-lg border border-[#1a1a1a] hover:border-[#2a2a2a] transition-colors cursor-pointer"
         >
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3.5">
             <Shield className="w-5 h-5 text-[#9d6db8]" />
             <div>
               <p className="text-sm font-medium text-[#eeeeee]">Security</p>
@@ -572,7 +572,7 @@ function AccountSecurityContent({
 
         {/* Deactivate Account */}
         <div className="group flex items-center justify-between p-4 bg-[#221f20] rounded-lg border border-[#1a1a1a] hover:border-[#2a2a2a] transition-colors cursor-pointer">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3.5">
             <UserX className="w-5 h-5 text-[#9d6db8]" />
             <div>
               <p className="text-sm font-medium text-[#eeeeee]">
@@ -584,7 +584,7 @@ function AccountSecurityContent({
 
         {/* Delete Account */}
         <div className="group flex items-center justify-between p-4 bg-[#221f20] rounded-lg border border-[#1a1a1a] hover:border-[#ba2f1f]/30 transition-colors cursor-pointer">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3.5">
             <Trash2 className="w-5 h-5 text-[#ba2f1f]" />
             <div>
               <p className="text-sm font-medium text-[#ba2f1f]">
@@ -596,7 +596,7 @@ function AccountSecurityContent({
 
         {/* Report Account */}
         <div className="group flex items-center justify-between p-4 bg-[#221f20] rounded-lg border border-[#1a1a1a] hover:border-[#2a2a2a] transition-colors cursor-pointer">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3.5">
             <Flag className="w-5 h-5 text-[#9d6db8]" />
             <div>
               <p className="text-sm font-medium text-[#eeeeee]">

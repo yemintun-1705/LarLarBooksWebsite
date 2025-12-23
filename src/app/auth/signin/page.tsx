@@ -12,7 +12,7 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
+    emailOrUsername: "",
     password: "",
   });
 
@@ -33,13 +33,13 @@ export default function SignInPage() {
 
     try {
       const result = await signIn("credentials", {
-        email: formData.email,
+        emailOrUsername: formData.emailOrUsername,
         password: formData.password,
         redirect: false,
       });
 
       if (result?.error) {
-        throw new Error("Invalid email or password");
+        throw new Error("Invalid email/username or password");
       }
 
       // Redirect to home page
@@ -143,13 +143,13 @@ export default function SignInPage() {
           {/* Email Sign In Inputs */}
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Email</label>
+              <label className="block text-sm text-gray-300 mb-1">Email or Username</label>
               <input
-                type="email"
-                placeholder="you@example.com"
-                value={formData.email}
+                type="text"
+                placeholder="you@example.com or username"
+                value={formData.emailOrUsername}
                 onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
+                  setFormData({ ...formData, emailOrUsername: e.target.value })
                 }
                 required
                 disabled={isLoading}

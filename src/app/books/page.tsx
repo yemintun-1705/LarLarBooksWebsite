@@ -203,19 +203,19 @@ export default function BooksPage() {
           {/* Header with Actions */}
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-white text-3xl font-bold">Write</h1>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={() => router.push("/books/upload")}
-                className="flex items-center gap-2 bg-[#67377e] hover:bg-[#5a2f6b] text-white font-medium px-6 py-3 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 bg-[#67377e] hover:bg-[#5a2f6b] text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
               >
-                <PenLine className="w-5 h-5" />
+                <PenLine className="w-4 h-4" />
                 Write Book
               </button>
               <button
                 onClick={() => alert("Make Series feature coming soon!")}
-                className="flex items-center gap-2 bg-[#67377e] hover:bg-[#5a2f6b] text-white font-medium px-6 py-3 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 bg-[#67377e] hover:bg-[#5a2f6b] text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
               >
-                <Layers className="w-5 h-5" />
+                <Layers className="w-4 h-4" />
                 Make Series
               </button>
             </div>

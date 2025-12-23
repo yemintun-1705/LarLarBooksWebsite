@@ -15,17 +15,42 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        emailOrUsername: { label: "Email or Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.emailOrUsername || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
 
-        // Authenticate with Supabase Auth
+        // Determine if input is email or username
+        const isEmail = credentials.emailOrUsername.includes("@");
+        let email: string;
+
+        if (isEmail) {
+          // If it's an email, use it directly
+          email = credentials.emailOrUsername;
+        } else {
+          // If it's a username, look up the email from Profile
+          const profileByUsername = await prisma.profile.findUnique({
+            where: {
+              username: credentials.emailOrUsername,
+            },
+            select: {
+              email: true,
+            },
+          });
+
+          if (!profileByUsername || !profileByUsername.email) {
+            throw new Error("Invalid credentials");
+          }
+
+          email = profileByUsername.email;
+        }
+
+        // Authenticate with Supabase Auth using the email
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: credentials.email,
+          email: email,
           password: credentials.password,
         });
 
