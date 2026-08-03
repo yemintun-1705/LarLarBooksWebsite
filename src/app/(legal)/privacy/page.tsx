@@ -62,7 +62,7 @@ const sections = [
       "You have the following rights: (a) to access the personal information we hold about you; (b) to request correction of inaccurate data; (c) to request deletion of your data; and (d) to opt out of marketing communications. To exercise these rights, contact support@larlarbooks.com.",
   },
   {
-    myTitle: "၇။ ကွတ်ကီးနှင့် ခြေရာခံခြင်း",
+    myTitle: "၇။ အသုံးပြုမှုဒေတာနှင့် စာရင်းအင်း",
     // §7 rewritten to match actual behavior (owner-reviewed): no third-party
     // analytics/crash SDKs in the app (verified against the mobile package.json
     // and app config), first-party access logs / aggregate stats only.
