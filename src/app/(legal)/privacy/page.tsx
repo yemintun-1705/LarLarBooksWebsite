@@ -16,18 +16,18 @@ const sections = [
   {
     myTitle: "၁။ ကျွန်ုပ်တို့ စုဆောင်းသော အချက်အလက်များ",
     myBody:
-      "သင်အကောင့်စာရင်းသွင်းသည့်အခါ သင်တိုက်ရိုက်ပေးအပ်သည့် အမည်၊ အီးမေးလ်လိပ်စာ၊ ဖုန်းနံပါတ်၊ မွေးသက္ကရာဇ်နှင့် စကားဝှက်ကဲ့သို့သော အချက်အလက်များကို ကျွန်ုပ်တို့ စုဆောင်းပါသည်။ သင့်အတွေ့အကြုံကို တိုးတက်စေရန် အသုံးပြုမှုဒေတာ၊ စက်ပစ္စည်းအချက်အလက်နှင့် စာဖတ်မှုလုပ်ဆောင်ချက်များကိုလည်း စုဆောင်းပါသည်။",
+      "သင်အကောင့်စာရင်းသွင်းသည့်အခါ သင်တိုက်ရိုက်ပေးအပ်သည့် အမည်၊ အီးမေးလ်လိပ်စာ၊ ဖုန်းနံပါတ် (မဖြည့်လည်း ရသည်)၊ မွေးသက္ကရာဇ်နှင့် စကားဝှက်ကဲ့သို့သော အချက်အလက်များကို ကျွန်ုပ်တို့ စုဆောင်းပါသည်။ သင်ဆန္ဒရှိပါက ပရိုဖိုင်ဓာတ်ပုံ တင်နိုင်ပါသည်။ သင့်အတွေ့အကြုံကို တိုးတက်စေရန် အသုံးပြုမှုဒေတာ၊ စက်ပစ္စည်းအချက်အလက်၊ ရှာဖွေမှုစာသားများ၊ IP လိပ်စာ၊ စာဖတ်မှုလုပ်ဆောင်ချက်များနှင့် သင်ရေးသားသော အကြောင်းအရာများ (သုံးသပ်ချက်များ၊ မှတ်ချက်များ၊ မှတ်စုများနှင့် အရောင်ခြယ်မှတ်သားချက်များ) ကိုလည်း စုဆောင်းပါသည်။",
     enTitle: "Information We Collect",
     enBody:
-      "When you register for an account, we collect information you provide directly, such as your name, email address, phone number (optional), date of birth, and password. To improve your experience, we also collect usage data, device identifiers, and reading activity.",
+      "When you register for an account, we collect information you provide directly, such as your name, email address, phone number (optional), date of birth, and password. If you choose to, you may also upload a profile photo (avatar). As you use the app, we collect usage data, device identifiers, search queries, IP address, reading activity, and the content you create — reviews, comments, notes, and highlights.",
   },
   {
     myTitle: "၂။ သင့်အချက်အလက်များကို အသုံးပြုပုံ",
     myBody:
-      "ကျွန်ုပ်တို့သည် သင့်အချက်အလက်များကို အောက်ပါအတွက် အသုံးပြုပါသည်- (က) သင့်အကောင့်ကို ဖန်တီးပြီး စီမံခန့်ခွဲရန်၊ (ခ) ကျွန်ုပ်တို့၏ ဝန်ဆောင်မှုများကို ပေးအပ်ပြီး တိုးတက်စေရန်၊ (ဂ) အရေးကြီးသော အပ်ဒိတ်များနှင့် အကြောင်းကြားချက်များ ပေးပို့ရန်၊ (ဃ) သင့်စာဖတ်မှု အကြံပြုချက်များကို စိတ်ကြိုက်ပြုလုပ်ရန်၊ (င) ငွေပေးငွေယူများကို ဆောင်ရွက်ပြီး လိမ်လည်မှုများကို ကာကွယ်ရန်။",
+      "ကျွန်ုပ်တို့သည် သင့်အချက်အလက်များကို အောက်ပါအတွက် အသုံးပြုပါသည်- (က) သင့်အကောင့်ကို ဖန်တီးပြီး စီမံခန့်ခွဲရန်၊ (ခ) ကျွန်ုပ်တို့၏ ဝန်ဆောင်မှုများကို ပေးအပ်ပြီး တိုးတက်စေရန်၊ (ဂ) အရေးကြီးသော အပ်ဒိတ်များနှင့် အကြောင်းကြားချက်များ ပေးပို့ရန်၊ (ဃ) သင့်စာဖတ်မှု အကြံပြုချက်များကို စိတ်ကြိုက်ပြုလုပ်ရန်။",
     enTitle: "How We Use Your Information",
     enBody:
-      "We use your information to: (a) create and manage your account; (b) provide and improve our services; (c) send important updates and notifications; (d) personalize your reading recommendations; and (e) process transactions and prevent fraud.",
+      "We use your information to: (a) create and manage your account; (b) provide and improve our services; (c) send important updates and notifications; and (d) personalize your reading recommendations.",
   },
   {
     myTitle: "၃။ အချက်အလက် မျှဝေခြင်း",
@@ -63,11 +63,14 @@ const sections = [
   },
   {
     myTitle: "၇။ ကွတ်ကီးနှင့် ခြေရာခံခြင်း",
+    // §7 rewritten to match actual behavior (owner-reviewed): no third-party
+    // analytics/crash SDKs in the app (verified against the mobile package.json
+    // and app config), first-party access logs / aggregate stats only.
     myBody:
-      "ကျွန်ုပ်တို့၏ အက်ပ်ကို မည်သို့အသုံးပြုကြောင်း နားလည်ရန် ခွဲခြမ်းစိတ်ဖြာသည့် ကိရိယာများကို အသုံးပြုပါသည်။ ဤဒေတာကို စုစုပေါင်းအနေဖြင့် စုဆောင်းထားပြီး သင့်ကို ကိုယ်ရေးကိုယ်တာအရ မခွဲခြားနိုင်ပါ။ သင့်အကောင့်ဆက်တင်များတွင် analytics မှ ရွေးချယ်ပယ်ဖျက်နိုင်ပါသည်။",
-    enTitle: "Cookies and Tracking",
+      "ကျွန်ုပ်တို့သည် ပြင်ပ (third-party) ကြော်ငြာ သို့မဟုတ် analytics SDK များကို အသုံးမပြုပါ။ ဝန်ဆောင်မှုကို လည်ပတ်ရန်၊ လုံခြုံစေရန်နှင့် တိုးတက်စေရန် ကျွန်ုပ်တို့၏ ကိုယ်ပိုင်စနစ်အတွင်း အသုံးပြုမှုနှင့် အသုံးပြုမှတ်တမ်းများ (ဥပမာ — content access logs နှင့် စုစုပေါင်း platform စာရင်းအင်းများ) ကို မှတ်တမ်းတင်ပါသည်။ စုစုပေါင်း စာရင်းအင်းများသည် သင့်ကို ကိုယ်ရေးကိုယ်တာအရ မခွဲခြားနိုင်ပါ။",
+    enTitle: "Usage Data and Analytics",
     enBody:
-      "We use analytics tools to understand how our app is used. This data is collected in aggregate and does not personally identify you. You can opt out of analytics in your account settings.",
+      "We do not use third-party advertising or analytics SDKs. To operate, secure, and improve the service, we record usage and access information within our own systems — for example, content access logs and aggregate platform statistics. Aggregate statistics do not personally identify you.",
   },
   {
     myTitle: "၈။ ကလေးများ၏ ကိုယ်ရေးကိုယ်တာ",
@@ -99,9 +102,9 @@ export default function PrivacyPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-12 text-[#eeeeee]">
       <p className="mb-2 text-center text-xs text-[#777]">
-        <My>နောက်ဆုံးပြင်ဆင်သည့်ရက်: ဇန်နဝါရီ ၁၆၊ ၂၀၂၆</My>
+        <My>နောက်ဆုံးပြင်ဆင်သည့်ရက်: ဩဂုတ် ၃၊ ၂၀၂၆</My>
         <span className="mx-2">·</span>
-        Last updated: January 16, 2026
+        Last updated: August 3, 2026
       </p>
 
       <h1 className="mb-2 text-center text-2xl font-bold">
