@@ -18,11 +18,17 @@ const bodySchema = z.object({
 
 // Generic response — identical whether or not the email maps to an account,
 // so the endpoint can't be used to enumerate registered emails.
-const GENERIC_OK = NextResponse.json({
-  success: true,
-  message:
-    "Your deletion request has been received. Our team will process it and follow up by email.",
-});
+//
+// Built per request, not once at module scope: a NextResponse body is a stream
+// that can only be consumed once, so a shared instance serves the first request
+// after a cold start and returns a broken body to every request after it on the
+// same warm instance.
+const genericOk = () =>
+  NextResponse.json({
+    success: true,
+    message:
+      "Your deletion request has been received. Our team will process it and follow up by email.",
+  });
 
 export async function POST(request: Request) {
   let parsed: z.infer<typeof bodySchema>;
@@ -52,7 +58,7 @@ export async function POST(request: Request) {
       profileMatched: false,
       rowInserted: false,
     });
-    return GENERIC_OK;
+    return genericOk();
   }
 
   const supabase = createClient(supabaseUrl, serviceKey, {
@@ -121,5 +127,5 @@ export async function POST(request: Request) {
     deadline: deadlineStr,
   });
 
-  return GENERIC_OK;
+  return genericOk();
 }
