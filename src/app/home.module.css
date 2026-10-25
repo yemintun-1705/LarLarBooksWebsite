@@ -1,0 +1,665 @@
+/*
+  Home page — built from a 1920px-wide design frame.
+  --u is "one design pixel": it equals 1px at 1920px wide, shrinks proportionally
+  on narrower windows, and is capped so the page never grows past the design size.
+  Every measurement below is written as `calc(var(--u) * <design px>)`.
+*/
+
+.page {
+  --u: calc(min(100vw, 1920px) / 1920);
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  --bg: #181818;
+  --bg-nav: rgb(24 24 24 / 0.88);
+  --fg: #fff;
+  --orn: #4c245e;
+  --bar: #7b5ba7;
+  --icon: #9d6db8;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-nunito), var(--font-myanmar-sans), sans-serif;
+}
+
+/* Light mode: follows the device setting (lavender page, dark text, pale ornaments) */
+@media (prefers-color-scheme: light) {
+  .page {
+    --bg: #f2f1f6;
+    --bg-nav: rgb(242 241 246 / 0.88);
+    --fg: #1a1a1a;
+    --orn: #d8caf2;
+    --bar: #9e6bb8;
+    --icon: #67377e;
+  }
+}
+
+/* ---------- Header (fixed, 1180 design px container) ---------- */
+
+.header {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 50;
+  padding: calc(var(--u) * 44) 0 calc(var(--u) * 20);
+  transition: background-color 0.2s, backdrop-filter 0.2s;
+}
+
+/* Appears once the page has scrolled, so content never runs under the nav */
+.headerScrolled {
+  background: var(--bg-nav);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.headerInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(var(--u) * 1180);
+  margin: 0 auto;
+}
+
+.brand,
+.brand img {
+  display: block;
+  width: calc(var(--u) * 44);
+  height: calc(var(--u) * 44);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 62);
+  font-size: max(13px, calc(var(--u) * 19));
+}
+
+.navLink,
+.lang {
+  transition: opacity 0.15s;
+}
+
+.navLink:hover,
+.lang:hover {
+  opacity: 0.7;
+}
+
+.lang {
+  margin-left: calc(var(--u) * 36);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: max(14px, calc(var(--u) * 22));
+  cursor: pointer;
+}
+
+/* ---------- Hero: one design screen (1080 design px tall) ---------- */
+
+.hero {
+  position: relative;
+  min-height: calc(var(--u) * 1080);
+  overflow: hidden;
+}
+
+/* Lotus ornament: flush with the top, centered, 1160 design px wide */
+.ornament {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(var(--u) * 1160);
+  max-width: none;
+  aspect-ratio: 2211 / 1896;
+  background: var(--orn);
+  -webkit-mask: url("/brand/lotus-ornament.webp") center / 100% 100% no-repeat;
+  mask: url("/brand/lotus-ornament.webp") center / 100% 100% no-repeat;
+  transform: translateX(-50%);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Starts 304 design px from the top, so the logo's top edge sits at 304 */
+.main {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--u) * 304) 24px 64px;
+  text-align: center;
+}
+
+.heroLogo {
+  width: calc(var(--u) * 130);
+  height: calc(var(--u) * 130);
+}
+
+.title {
+  margin: calc(var(--u) * 133) 0 0;
+  font-size: max(44px, calc(var(--u) * 90));
+  font-weight: 700;
+  line-height: 1;
+}
+
+.subtitle {
+  max-width: calc(var(--u) * 640);
+  margin: calc(var(--u) * 38) 0 0;
+  font-size: max(16px, calc(var(--u) * 25));
+  line-height: 1.8;
+}
+
+/* ---------- Our Mission: the second design screen ---------- */
+
+.mission {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(var(--u) * 1080);
+  padding: calc(var(--u) * 154) 0 calc(var(--u) * 100);
+}
+
+.missionTitle {
+  margin: 0;
+  font-size: max(30px, calc(var(--u) * 45));
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* Purple highlight bar behind the lower half of the heading */
+.missionTitleText {
+  position: relative;
+  z-index: 0;
+  display: inline-block;
+}
+
+.missionTitleText::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 56%;
+  right: calc(var(--u) * -9);
+  bottom: -33%;
+  left: calc(var(--u) * 9);
+  background: var(--bar);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: calc(var(--u) * 60);
+  width: calc(var(--u) * 1180);
+  margin: calc(var(--u) * 134) auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cardImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.cardText {
+  margin: calc(var(--u) * 20) 0 0;
+  /* Same size as the nav button text */
+  font-size: max(13px, calc(var(--u) * 19));
+  line-height: 1.8;
+  text-align: center;
+  white-space: pre-line;
+}
+
+/* English frame: bigger heading, tighter gaps, 41px line pitch (desktop only) */
+@media (min-width: 900px) {
+  .page[lang="en"] .mission {
+    padding-top: calc(var(--u) * 134);
+  }
+
+  .page[lang="en"] .missionTitle {
+    font-size: max(30px, calc(var(--u) * 50));
+  }
+
+  .page[lang="en"] .missionTitleText::after {
+    top: 55%;
+    bottom: -9%;
+  }
+
+  .page[lang="en"] .cards {
+    margin-top: calc(var(--u) * 117.5);
+  }
+
+  .page[lang="en"] .cardText {
+    margin-top: calc(var(--u) * 22);
+    font-size: max(13px, calc(var(--u) * 19));
+    line-height: 1.8;
+  }
+
+  /* In the English "Our Value" frame the heading sits 7px left of centre */
+  .page[lang="en"] .value .missionTitle {
+    transform: translateX(calc(var(--u) * -7));
+  }
+
+  /* English footer: bigger title and rows */
+  .page[lang="en"] .footerInner {
+    padding-top: calc(var(--u) * 94);
+  }
+
+  .page[lang="en"] .footerTitle {
+    font-size: max(32px, calc(var(--u) * 72));
+  }
+
+  .page[lang="en"] .footerRow {
+    font-size: max(13px, calc(var(--u) * 26));
+  }
+
+  .page[lang="en"] .footerRow:first-of-type {
+    margin-top: calc(var(--u) * 66);
+  }
+}
+
+/*
+  Our Mission: one large swirling ornament behind the heading and cards. Its tail
+  reaches out to the right behind the heading, the big curl sits below the cards.
+  The image is 1739 design px wide and starts 766 design px left of the page centre.
+*/
+.missionBg {
+  overflow: hidden;
+}
+
+.missionBg::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 50%;
+  width: calc(var(--u) * 1739);
+  aspect-ratio: 2499 / 1678;
+  background: var(--orn);
+  -webkit-mask: url("/brand/ornament-swirl.webp") center / 100% 100% no-repeat;
+  mask: url("/brand/ornament-swirl.webp") center / 100% 100% no-repeat;
+  transform: translateX(calc(var(--u) * -766));
+  pointer-events: none;
+}
+
+/* ---------- Our Value: same layout as Our Mission, a little shorter screen ---------- */
+
+.value {
+  min-height: calc(var(--u) * 1020);
+  overflow: hidden;
+}
+
+/*
+  Corner ornament drawn twice behind the heading and the cards: once turned upside
+  down over the heading, once upright below the cards (both ~1000 design px wide,
+  mirrored around the page centre). The cards sit on top, so only the parts that
+  peek out around them are visible, like in the design.
+*/
+.value::before,
+.value::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  width: calc(var(--u) * 1002);
+  aspect-ratio: 1998 / 1036;
+  background: var(--orn);
+  -webkit-mask: url("/brand/ornament-corner.png") center / 100% 100% no-repeat;
+  mask: url("/brand/ornament-corner.png") center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.value::before {
+  top: calc(var(--u) * 37);
+  transform: translateX(calc(var(--u) * -639)) rotate(180deg);
+}
+
+.value::after {
+  top: calc(var(--u) * 514);
+  transform: translateX(calc(var(--u) * -363));
+}
+
+/* ---------- Contact Us (footer) ---------- */
+
+.footer {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(var(--u) * 502);
+  overflow: hidden;
+}
+
+/* Engraved scroll band across the full width, behind the contact details */
+.footerPattern {
+  position: absolute;
+  z-index: -1;
+  top: calc(var(--u) * 70);
+  right: 0;
+  left: 0;
+  aspect-ratio: 3840 / 731;
+  background: var(--orn);
+  -webkit-mask: url("/brand/pattern-band.png") center / 100% 100% no-repeat;
+  mask: url("/brand/pattern-band.png") center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.footerInner {
+  position: relative;
+  width: calc(var(--u) * 1180);
+  margin: 0 auto;
+  padding-top: calc(var(--u) * 96);
+}
+
+.footerTitle {
+  margin: 0;
+  font-size: max(32px, calc(var(--u) * 68));
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.footerRow {
+  display: flex;
+  align-items: baseline;
+  margin: calc(var(--u) * 34) 0 0;
+  font-size: max(13px, calc(var(--u) * 24));
+  line-height: calc(var(--u) * 44);
+}
+
+.footerRow:first-of-type {
+  margin-top: calc(var(--u) * 72);
+}
+
+.footerLabel {
+  display: inline-block;
+  width: calc(var(--u) * 169);
+  font-weight: 700;
+}
+
+.footerSep {
+  margin-left: calc(var(--u) * 25);
+  font-weight: 400;
+}
+
+.footerLink {
+  transition: opacity 0.15s;
+}
+
+.footerLink:hover {
+  opacity: 0.7;
+}
+
+.footerLinks {
+  gap: calc(var(--u) * 42);
+  font-weight: 700;
+}
+
+.footerDot {
+  font-weight: 400;
+}
+
+/* 2x2 social icons, 145 design px apart, right part of the container */
+.social {
+  position: absolute;
+  top: calc(var(--u) * 142);
+  right: calc(var(--u) * 53);
+  display: grid;
+  grid-template-columns: repeat(2, calc(var(--u) * 72));
+  grid-auto-rows: calc(var(--u) * 75);
+  gap: calc(var(--u) * 72) calc(var(--u) * 73);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.socialLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--icon);
+  transition: opacity 0.15s;
+}
+
+.socialLink:hover {
+  opacity: 0.75;
+}
+
+.socialLink svg {
+  display: block;
+  flex-shrink: 0;
+  width: calc(var(--u) * 70);
+  height: auto;
+}
+
+/* Icon sizes taken from the design (the Facebook "f" and TikTok note are stockier) */
+.social li:nth-child(1) .socialLink svg {
+  width: calc(var(--u) * 55);
+  height: calc(var(--u) * 72.5);
+}
+
+.social li:nth-child(2) .socialLink svg {
+  width: calc(var(--u) * 70);
+  height: calc(var(--u) * 70);
+}
+
+.social li:nth-child(4) .socialLink svg {
+  width: calc(var(--u) * 85);
+  height: calc(var(--u) * 75.5);
+}
+
+/* In the design the right-hand column sits slightly higher */
+.social li:nth-child(even) {
+  transform: translateY(calc(var(--u) * -7));
+}
+
+/* The Burmese frame uses Noto Sans for the contact details, and sits a little lower */
+.page[lang="my"] .footer {
+  font-family: var(--font-myanmar-sans), var(--font-nunito), sans-serif;
+}
+
+.page[lang="my"] .footerInner {
+  padding-top: calc(var(--u) * 122);
+}
+
+.page[lang="my"] .footerTitle {
+  margin-left: calc(var(--u) * 3);
+}
+
+.page[lang="my"] .footerRow {
+  font-size: max(13px, calc(var(--u) * 22));
+  font-weight: 400;
+}
+
+.page[lang="my"] .footerLabel {
+  font-weight: 400;
+}
+
+.page[lang="my"] .footerRow {
+  margin-top: calc(var(--u) * 30);
+  margin-left: calc(var(--u) * 4);
+}
+
+.page[lang="my"] .footerRow:first-of-type {
+  margin-top: calc(var(--u) * 70);
+}
+
+/* ---------- Phones and small tablets: fixed pixel sizes instead of scaling ---------- */
+
+@media (max-width: 899px) {
+  .header {
+    padding: 44px 20px 16px;
+  }
+
+  .headerInner {
+    width: 100%;
+  }
+
+  .brand,
+  .brand img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .nav {
+    gap: 16px;
+    font-size: 14px;
+  }
+
+  .lang {
+    margin-left: 0;
+    font-size: 14px;
+  }
+
+  .hero {
+    min-height: 100vh;
+  }
+
+  .ornament {
+    width: max(1160px, 100vw);
+  }
+
+  .main {
+    padding-top: 184px;
+  }
+
+  .heroLogo {
+    width: 130px;
+    height: 130px;
+  }
+
+  .title {
+    margin-top: 72px;
+    font-size: 40px;
+  }
+
+  .subtitle {
+    max-width: 640px;
+    margin-top: 24px;
+    font-size: 16px;
+  }
+
+  .mission {
+    min-height: 0;
+    padding: 56px 24px 72px;
+  }
+
+  .missionTitle {
+    font-size: 32px;
+  }
+
+  .missionTitleText::after {
+    right: -6px;
+    left: 6px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    width: 100%;
+    max-width: 353px;
+    margin-top: 48px;
+  }
+
+  .cardText,
+  .page[lang="en"] .cardText {
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .footer {
+    min-height: 0;
+    padding: 24px 24px 56px;
+  }
+
+  /* Phones: keep the band's natural proportions, centred, along the bottom */
+  .footerPattern {
+    top: auto;
+    right: auto;
+    bottom: 0;
+    left: 50%;
+    width: 1100px;
+    transform: translateX(-50%);
+  }
+
+  .missionBg::before {
+    top: 0;
+    width: 900px;
+    transform: translateX(-50%);
+  }
+
+  .value::before,
+  .value::after {
+    width: 640px;
+  }
+
+  .value::before {
+    top: 0;
+    transform: translateX(-50%) rotate(180deg);
+  }
+
+  .value::after {
+    top: auto;
+    bottom: 0;
+    transform: translateX(-50%);
+  }
+
+  .footerInner {
+    width: 100%;
+    max-width: 640px;
+    padding-top: 40px;
+  }
+
+  .footerTitle {
+    font-size: 34px;
+  }
+
+  .footerRow,
+  .page[lang="my"] .footerRow {
+    flex-wrap: wrap;
+    margin-top: 12px;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  .footerRow:first-of-type,
+  .page[lang="my"] .footerRow:first-of-type {
+    margin-top: 28px;
+  }
+
+  .footerLabel {
+    width: auto;
+    margin-right: 16px;
+  }
+
+  .footerSep {
+    margin-left: 12px;
+  }
+
+  .footerLinks {
+    gap: 16px;
+  }
+
+  .social {
+    position: static;
+    display: flex;
+    gap: 28px;
+    margin-top: 36px;
+  }
+
+  .social li:nth-child(even) {
+    transform: none;
+  }
+
+  .socialLink {
+    width: auto;
+    height: auto;
+  }
+
+  .socialLink svg,
+  .social li:nth-child(n) .socialLink svg {
+    width: auto;
+    height: 36px;
+  }
+}
