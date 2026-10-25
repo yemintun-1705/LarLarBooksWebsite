@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Nunito, Noto_Sans } from "next/font/google";
+import { Nunito, Noto_Sans, Noto_Sans_Myanmar } from "next/font/google";
 import "./globals.css";
 import AuthSessionProvider from "@/components/providers/session-provider";
 import { SidebarProvider } from "@/components/providers/sidebar-provider";
@@ -16,6 +16,14 @@ const notoSansMyanmar = Noto_Sans({
   variable: "--font-noto-myanmar",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+});
+
+// Real Burmese glyphs (the Noto_Sans above only ships Latin) — used by the landing page
+const myanmarSans = Noto_Sans_Myanmar({
+  variable: "--font-myanmar-sans",
+  subsets: ["myanmar"],
+  weight: ["400", "500", "700"],
   display: "swap",
 });
 
@@ -44,7 +52,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body
-        className={`${nunito.variable} ${notoSansMyanmar.variable} antialiased font-sans`}
+        className={`${nunito.variable} ${notoSansMyanmar.variable} ${myanmarSans.variable} antialiased font-sans`}
       >
         <SidebarProvider>
           <AuthSessionProvider>
