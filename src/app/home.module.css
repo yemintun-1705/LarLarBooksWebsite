@@ -247,7 +247,7 @@
   }
 
   .page[lang="en"] .footerTitle {
-    font-size: max(32px, calc(var(--u) * 72));
+    font-size: max(28px, calc(var(--u) * 60));
   }
 
   .page[lang="en"] .footerRow {
@@ -352,7 +352,7 @@
 
 .footerTitle {
   margin: 0;
-  font-size: max(32px, calc(var(--u) * 68));
+  font-size: max(28px, calc(var(--u) * 56));
   font-weight: 600;
   line-height: 1.2;
 }
@@ -400,12 +400,12 @@
 /* 2x2 social icons, 145 design px apart, right part of the container */
 .social {
   position: absolute;
-  top: calc(var(--u) * 142);
+  top: calc(var(--u) * 135);
   right: calc(var(--u) * 53);
   display: grid;
-  grid-template-columns: repeat(2, calc(var(--u) * 72));
-  grid-auto-rows: calc(var(--u) * 75);
-  gap: calc(var(--u) * 72) calc(var(--u) * 73);
+  grid-template-columns: repeat(2, calc(var(--u) * 58));
+  grid-auto-rows: calc(var(--u) * 60);
+  gap: calc(var(--u) * 58) calc(var(--u) * 58);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -425,29 +425,35 @@
   opacity: 0.75;
 }
 
-.socialLink svg {
+/* Icons are the supplied PNGs used as masks, so they take the theme's icon colour */
+.socialIcon {
   display: block;
   flex-shrink: 0;
-  width: calc(var(--u) * 70);
-  height: auto;
+  height: calc(var(--u) * 56);
+  aspect-ratio: 1;
+  background: currentColor;
+  -webkit-mask: var(--icon-url) center / 100% 100% no-repeat;
+  mask: var(--icon-url) center / 100% 100% no-repeat;
 }
 
-/* Icon sizes taken from the design (the Facebook "f" and TikTok note are stockier) */
-.social li:nth-child(1) .socialLink svg {
-  width: calc(var(--u) * 55);
-  height: calc(var(--u) * 72.5);
+.iconFacebook {
+  --icon-url: url("/brand/social/facebook.png");
+  height: calc(var(--u) * 60);
+  aspect-ratio: 97 / 149;
 }
 
-.social li:nth-child(2) .socialLink svg {
-  width: calc(var(--u) * 70);
-  height: calc(var(--u) * 70);
+.iconInstagram {
+  --icon-url: url("/brand/social/instagram.png");
 }
 
-.social li:nth-child(4) .socialLink svg {
-  width: calc(var(--u) * 85);
-  height: calc(var(--u) * 75.5);
+.iconLinkedin {
+  --icon-url: url("/brand/social/linkedin.png");
 }
 
+.iconTiktok {
+  --icon-url: url("/brand/social/tiktok.png");
+  height: calc(var(--u) * 60);
+}
 /* In the design the right-hand column sits slightly higher */
 .social li:nth-child(even) {
   transform: translateY(calc(var(--u) * -7));
@@ -460,6 +466,10 @@
 
 .page[lang="my"] .footerInner {
   padding-top: calc(var(--u) * 122);
+}
+
+.page[lang="my"] .social {
+  top: calc(var(--u) * 160);
 }
 
 .page[lang="my"] .footerTitle {
@@ -612,7 +622,7 @@
   }
 
   .footerTitle {
-    font-size: 34px;
+    font-size: 30px;
   }
 
   .footerRow,
@@ -657,9 +667,7 @@
     height: auto;
   }
 
-  .socialLink svg,
-  .social li:nth-child(n) .socialLink svg {
-    width: auto;
-    height: 36px;
+  .socialLink .socialIcon {
+    height: 30px;
   }
 }

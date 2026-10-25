@@ -75,80 +75,27 @@ const VALUE_IMAGES = [
   "/brand/value-3.png",
 ];
 
-/* ---------- Social icons (drawn as inline SVG, colored by the footer) ---------- */
+/* ---------- Social icons (PNG masks, coloured by the footer via CSS) ---------- */
 
-function FacebookIcon() {
-  return (
-    <svg
-      viewBox="-3 -3 54 82"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      fill="currentColor"
-      stroke="currentColor"
-      strokeWidth="6"
-      strokeLinejoin="round"
-    >
-      <path d="M31 76V42h11.5l1.8-13.5H31v-8.6c0-3.9 1.1-6.6 6.7-6.6h7.1V1.2C43.6 1 39.4.6 34.5.6 24.3.6 17.3 6.8 17.3 18.2v10.3H5.7V42h11.6v34H31z" />
-    </svg>
-  );
-}
-
-function InstagramIcon() {
-  return (
-    <svg viewBox="0 0 72 72" aria-hidden="true" fill="none" stroke="currentColor">
-      <rect x="5" y="5" width="62" height="62" rx="17" strokeWidth="8" />
-      <circle cx="36" cy="36" r="14" strokeWidth="8" />
-      <circle cx="54" cy="18" r="4.5" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function LinkedInIcon() {
-  return (
-    <svg viewBox="0 0 72 72" aria-hidden="true" fill="currentColor">
-      <rect
-        x="4"
-        y="4"
-        width="64"
-        height="64"
-        rx="8"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="7"
-      />
-      {/* The "in" spans x 16.5–63.5, so it is shifted 4 left to sit centred in the 72-wide box */}
-      <g transform="translate(-4 0)">
-        <circle cx="22" cy="23" r="5.5" />
-        <rect x="16.5" y="32" width="11" height="22" />
-        <path d="M33 32h10.5v3.6c1.6-2.6 4.6-4.4 8.6-4.4 8 0 11 4.9 11 12.6V54H52V44.4c0-3.4-1-5.6-4.2-5.6-3.4 0-4.8 2.3-4.8 5.6V54H33V32z" />
-      </g>
-    </svg>
-  );
-}
-
-function TikTokIcon() {
-  return (
-    <svg
-      viewBox="-1 -1 26 26"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      fill="currentColor"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinejoin="round"
-    >
-      <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-    </svg>
-  );
-}
-
-const SOCIALS = [
-  { label: "Facebook", href: "#", Icon: FacebookIcon },
-  { label: "Instagram", href: "#", Icon: InstagramIcon },
-  { label: "LinkedIn", href: "#", Icon: LinkedInIcon },
-  { label: "TikTok", href: "#", Icon: TikTokIcon },
+// TikTok has no account link yet: its icon shows but is not clickable until one is added
+const SOCIALS: { label: string; href?: string; icon: string }[] = [
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/share/1ZETAEiCma/",
+    icon: styles.iconFacebook,
+  },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/larlarbooks",
+    icon: styles.iconInstagram,
+  },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/company/larlar-books/",
+    icon: styles.iconLinkedin,
+  },
+  { label: "TikTok", icon: styles.iconTiktok },
 ];
-
 export default function Home() {
   const [lang, setLang] = useState<Lang>("my");
   const [scrolled, setScrolled] = useState(false);
@@ -302,10 +249,15 @@ export default function Home() {
           </div>
 
           <ul className={styles.social}>
-            {SOCIALS.map(({ label, href, Icon }) => (
+            {SOCIALS.map(({ label, href, icon }) => (
               <li key={label}>
-                <a href={href} aria-label={label} className={styles.socialLink}>
-                  <Icon />
+                <a
+                  href={href}
+                  aria-label={label}
+                  className={styles.socialLink}
+                  {...(href && { target: "_blank", rel: "noopener noreferrer" })}
+                >
+                  <span className={`${styles.socialIcon} ${icon}`} aria-hidden="true" />
                 </a>
               </li>
             ))}
