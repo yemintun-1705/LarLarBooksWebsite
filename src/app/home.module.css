@@ -40,6 +40,49 @@
   user-select: none;
 }
 
+/* "No access" popup */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 24px 24px;
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  text-align: center;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+}
+
+.dialogText {
+  margin: 0 0 24px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.dialogBtn {
+  min-width: 120px;
+  min-height: 44px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--bar);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* ---------- Header (fixed, 1180 design px container) ---------- */
 
 .header {
