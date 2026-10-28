@@ -16,8 +16,9 @@ const COPY = {
     signUp: "အကောင့်ဖွင့်ရန်",
     contact: "ဆက်သွယ်ရန်",
     switchTo: "English",
-    search: "ရှာဖွေရန်",
     menu: "မီနူး",
+    noAccess: "ဤစာမျက်နှာသို့ ဝင်ရောက်ခွင့် မရှိပါ",
+    ok: "ကောင်းပြီ",
     title: "လာလာစာပေ",
     subtitle:
       "မည်သူမဆို မည်သည့်နေရာမဆို စာပေနှင့် ပညာရေးရရှိစေရန် ယူဆောင်ပေးနေပါသည်",
@@ -45,8 +46,9 @@ const COPY = {
     signUp: "Sign up",
     contact: "Contact",
     switchTo: "မြန်မာ",
-    search: "Search",
     menu: "Menu",
+    noAccess: "You don't have access to this page",
+    ok: "OK",
     title: "LarLar Books",
     subtitle: "Bringing Literature and Education to Everyone Around the World",
     missionTitle: "Our Mission",
@@ -111,6 +113,7 @@ export default function Home() {
   const [lang, setLang] = useState<Lang>("my");
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [noAccess, setNoAccess] = useState(false);
   const t = COPY[lang];
 
   // The header is fixed; give it a backdrop once the page has scrolled so content
@@ -122,6 +125,15 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Restricted pages redirect here with ?restricted=1: show the popup, then tidy the URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("restricted")) {
+      setNoAccess(true);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
+
   return (
     <div
       lang={lang}
@@ -129,6 +141,30 @@ export default function Home() {
       onContextMenu={blockImageAction}
       onDragStart={blockImageAction}
     >
+      {noAccess && (
+        <div className={styles.overlay} onClick={() => setNoAccess(false)}>
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="no-access-text"
+            className={styles.dialog}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p id="no-access-text" className={styles.dialogText}>
+              {t.noAccess}
+            </p>
+            <button
+              type="button"
+              autoFocus
+              className={styles.dialogBtn}
+              onClick={() => setNoAccess(false)}
+            >
+              {t.ok}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header (fixed) */}
       <header
         className={`${styles.header} ${scrolled ? styles.headerScrolled : ""}`}
@@ -167,12 +203,6 @@ export default function Home() {
 
           {/* Phones: icon buttons, the menu holds the text links */}
           <div className={styles.mobileNav}>
-            <Link href="/library" aria-label={t.search} className={styles.iconBtn}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-            </Link>
             <button
               type="button"
               aria-label={t.switchTo}

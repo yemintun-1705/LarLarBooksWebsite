@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Only the landing page (plus /privacy and /delete-account, which Google Play
+  // requires) is public for now. Every other page sends visitors back to `/`, which shows a "no access" popup.
+  async redirects() {
+    return ["/library", "/books/:path*", "/auth/:path*", "/settings"].map(
+      (source) => ({ source, destination: "/?restricted=1", permanent: false }),
+    );
+  },
   images: {
     remotePatterns: [
       {
