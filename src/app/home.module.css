@@ -33,6 +33,13 @@
   }
 }
 
+/* Images can't be selected, dragged or long-press saved */
+.page img {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
 /* ---------- Header (fixed, 1180 design px container) ---------- */
 
 .header {
@@ -494,68 +501,122 @@
   margin-top: calc(var(--u) * 70);
 }
 
-/* ---------- Phones and small tablets: fixed pixel sizes instead of scaling ---------- */
+/* Phone-only header pieces stay hidden on desktop */
+.mobileNav,
+.menu {
+  display: none;
+}
+
+/* ---------- Phones and small tablets: laid out on a 390px frame ---------- */
 
 @media (max-width: 899px) {
+  /* --m is one phone design pixel: 1px at 390px wide, capped so tablets stay phone-sized */
+  .page {
+    --m: calc(min(100vw, 480px) / 390);
+    /* one pixel of the 780px-wide phone design (2x of the 390px frame) */
+    --p: calc(min(100vw, 480px) / 780);
+  }
+
+  /* Solid bar on phones, so content never shows through the nav */
   .header {
-    padding: 44px 20px 16px;
+    padding: 14px 0 10px;
+    background: var(--bg);
   }
 
   .headerInner {
     width: 100%;
+    max-width: 480px;
+    padding: 0 16px;
   }
 
   .brand,
   .brand img {
-    width: 44px;
-    height: 44px;
+    width: 30px;
+    height: 30px;
   }
 
   .nav {
-    gap: 16px;
-    font-size: 14px;
+    display: none;
   }
 
-  .lang {
-    margin-left: 0;
-    font-size: 14px;
+  .mobileNav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-right: -10px;
+  }
+
+  .iconBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .iconBtn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .menu {
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 4px 16px 12px;
+    font-size: 16px;
+  }
+
+  .menu a {
+    padding: 12px 0;
   }
 
   .hero {
-    min-height: 100vh;
+    min-height: calc(var(--p) * 1020);
   }
 
   .ornament {
-    width: max(1160px, 100vw);
+    width: calc(var(--p) * 780);
+    aspect-ratio: 780 / 900;
+    -webkit-mask-image: url("/brand/mobile/lotus.png");
+    mask-image: url("/brand/mobile/lotus.png");
   }
 
   .main {
-    padding-top: 184px;
+    padding: calc(var(--p) * 400) 24px 0;
   }
 
   .heroLogo {
-    width: 130px;
-    height: 130px;
+    width: calc(var(--p) * 104);
+    height: calc(var(--p) * 104);
   }
 
   .title {
-    margin-top: 72px;
-    font-size: 40px;
+    margin-top: calc(var(--p) * 18);
+    font-size: calc(var(--p) * 92);
   }
 
   .subtitle {
-    max-width: 640px;
-    margin-top: 24px;
-    font-size: 16px;
+    max-width: calc(var(--m) * 320);
+    margin-top: calc(var(--p) * 26);
+    font-size: 14px;
+    line-height: 1.7;
   }
 
   .mission {
     min-height: 0;
-    padding: 56px 24px 72px;
+    padding: calc(var(--p) * 100) 24px calc(var(--p) * 100);
   }
 
-  .missionTitle {
-    font-size: 32px;
+  .missionTitle,
+  .page[lang="en"] .missionTitle {
+    font-size: 24px;
   }
 
   .missionTitleText::after {
@@ -565,97 +626,141 @@
 
   .cards {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: calc(var(--p) * 70);
     width: 100%;
-    max-width: 353px;
-    margin-top: 48px;
+    max-width: 300px;
+    margin-top: calc(var(--p) * 100);
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cardImage {
+    width: calc(var(--p) * 290);
   }
 
   .cardText,
   .page[lang="en"] .cardText {
-    margin-top: 14px;
+    margin-top: calc(var(--p) * 40);
     font-size: 14px;
-    line-height: 1.8;
+    line-height: 1.75;
   }
 
-  .footer {
-    min-height: 0;
-    padding: 24px 24px 56px;
-  }
-
-  /* Phones: keep the band's natural proportions, centred, along the bottom */
-  .footerPattern {
-    top: auto;
-    right: auto;
-    bottom: 0;
-    left: 50%;
-    width: 1100px;
-    transform: translateX(-50%);
-  }
-
+  /* Swirl: the bud peeks out on the right behind the cards */
   .missionBg::before {
     top: 0;
-    width: 900px;
+    width: calc(var(--p) * 780);
+    aspect-ratio: 780 / 1650;
+    -webkit-mask-image: url("/brand/mobile/swirl.png");
+    mask-image: url("/brand/mobile/swirl.png");
     transform: translateX(-50%);
   }
 
+  /* Value: a tall scroll top-left behind the heading, another bottom-right */
   .value::before,
   .value::after {
-    width: 640px;
+    transform: none;
   }
 
   .value::before {
     top: 0;
-    transform: translateX(-50%) rotate(180deg);
+    left: calc(50% - var(--p) * 350);
+    width: calc(var(--p) * 374);
+    aspect-ratio: 374 / 757;
+    -webkit-mask-image: url("/brand/mobile/value-left.png");
+    mask-image: url("/brand/mobile/value-left.png");
   }
 
   .value::after {
     top: auto;
     bottom: 0;
-    transform: translateX(-50%);
+    left: calc(50% + var(--p) * 68);
+    width: calc(var(--p) * 302);
+    aspect-ratio: 302 / 585;
+    -webkit-mask-image: url("/brand/mobile/value-right.png");
+    mask-image: url("/brand/mobile/value-right.png");
   }
 
-  .footerInner {
+  .footer {
+    min-height: 0;
+    padding: 0 0 48px;
+  }
+
+  .footerPattern {
+    /* Fills the whole footer, so all the contact text sits on the band */
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    aspect-ratio: auto;
+    -webkit-mask-image: url("/brand/mobile/band.png");
+    mask-image: url("/brand/mobile/band.png");
+    -webkit-mask-size: cover;
+    mask-size: cover;
+    transform: none;
+  }
+
+  .footerInner,
+  .page[lang="my"] .footerInner,
+  .page[lang="en"] .footerInner {
     width: 100%;
-    max-width: 640px;
-    padding-top: 40px;
+    max-width: 480px;
+    padding: calc(var(--m) * 30) 17px 0;
   }
 
-  .footerTitle {
-    font-size: 30px;
+  .footerTitle,
+  .page[lang="en"] .footerTitle {
+    font-size: calc(var(--m) * 38);
+  }
+
+  .page[lang="my"] .footerTitle {
+    margin-left: 0;
   }
 
   .footerRow,
-  .page[lang="my"] .footerRow {
+  .page[lang="my"] .footerRow,
+  .page[lang="en"] .footerRow {
     flex-wrap: wrap;
-    margin-top: 12px;
+    margin: 6px 0 0;
     font-size: 15px;
-    line-height: 1.8;
+    line-height: 1.9;
   }
 
   .footerRow:first-of-type,
-  .page[lang="my"] .footerRow:first-of-type {
-    margin-top: 28px;
+  .page[lang="my"] .footerRow:first-of-type,
+  .page[lang="en"] .footerRow:first-of-type {
+    margin-top: calc(var(--m) * 40);
   }
 
   .footerLabel {
     width: auto;
-    margin-right: 16px;
+    margin-right: 10px;
   }
 
   .footerSep {
-    margin-left: 12px;
+    margin-left: 8px;
   }
 
+  /* Stack the policy links, one per line, hiding the dot */
   .footerLinks {
-    gap: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+
+  .footerDot {
+    display: none;
   }
 
   .social {
     position: static;
     display: flex;
     gap: 28px;
-    margin-top: 36px;
+    margin-top: 28px;
   }
 
   .social li:nth-child(even) {
@@ -665,9 +770,11 @@
   .socialLink {
     width: auto;
     height: auto;
+    min-width: 32px;
+    min-height: 32px;
   }
 
   .socialLink .socialIcon {
-    height: 30px;
+    height: 26px;
   }
 }
