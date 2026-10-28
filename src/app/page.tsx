@@ -7,6 +7,8 @@ import styles from "./home.module.css";
 
 type Lang = "my" | "en";
 
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.softwarelarlar.larlarbooks";
 const SUPPORT_EMAIL = "support@larlarbooks.com";
 
 const COPY = {
@@ -14,6 +16,8 @@ const COPY = {
     signUp: "အကောင့်ဖွင့်ရန်",
     contact: "ဆက်သွယ်ရန်",
     switchTo: "English",
+    search: "ရှာဖွေရန်",
+    menu: "မီနူး",
     title: "လာလာစာပေ",
     subtitle:
       "မည်သူမဆို မည်သည့်နေရာမဆို စာပေနှင့် ပညာရေးရရှိစေရန် ယူဆောင်ပေးနေပါသည်",
@@ -41,6 +45,8 @@ const COPY = {
     signUp: "Sign up",
     contact: "Contact",
     switchTo: "မြန်မာ",
+    search: "Search",
+    menu: "Menu",
     title: "LarLar Books",
     subtitle: "Bringing Literature and Education to Everyone Around the World",
     missionTitle: "Our Mission",
@@ -96,9 +102,15 @@ const SOCIALS: { label: string; href?: string; icon: string }[] = [
   },
   { label: "TikTok", icon: styles.iconTiktok },
 ];
+// Stops right-click "save image" and dragging images out of the page
+function blockImageAction(e: React.SyntheticEvent) {
+  if (e.target instanceof HTMLImageElement) e.preventDefault();
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Lang>("my");
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const t = COPY[lang];
 
   // The header is fixed; give it a backdrop once the page has scrolled so content
@@ -111,7 +123,12 @@ export default function Home() {
   }, []);
 
   return (
-    <div lang={lang} className={styles.page}>
+    <div
+      lang={lang}
+      className={styles.page}
+      onContextMenu={blockImageAction}
+      onDragStart={blockImageAction}
+    >
       {/* Header (fixed) */}
       <header
         className={`${styles.header} ${scrolled ? styles.headerScrolled : ""}`}
@@ -128,9 +145,14 @@ export default function Home() {
           </Link>
 
           <nav className={styles.nav}>
-            <Link href="/auth/signup" className={styles.navLink}>
+            <a
+              href={PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.navLink}
+            >
               {t.signUp}
-            </Link>
+            </a>
             <Link href="#contact" className={styles.navLink}>
               {t.contact}
             </Link>
@@ -142,7 +164,55 @@ export default function Home() {
               {t.switchTo}
             </button>
           </nav>
+
+          {/* Phones: icon buttons, the menu holds the text links */}
+          <div className={styles.mobileNav}>
+            <Link href="/library" aria-label={t.search} className={styles.iconBtn}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+            </Link>
+            <button
+              type="button"
+              aria-label={t.switchTo}
+              onClick={() => setLang(lang === "my" ? "en" : "my")}
+              className={styles.iconBtn}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 5h9M7.5 3v2M5 5c.5 3.5 3 6 6 7M11 5c-.5 3.5-3 6.5-7 8" />
+                <path d="m12.5 21 4-9 4 9M13.9 18h5.2" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-label={t.menu}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((o) => !o)}
+              className={styles.iconBtn}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {menuOpen && (
+          <div className={styles.menu}>
+            <a
+              href={PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMenuOpen(false)}
+            >
+              {t.signUp}
+            </a>
+            <Link href="#contact" onClick={() => setMenuOpen(false)}>
+              {t.contact}
+            </Link>
+          </div>
+        )}
       </header>
 
       {/* Hero — one design screen (1080 design px tall) */}
