@@ -1,0 +1,79 @@
+/*
+  Extras for the shared-author page. Everything else (header, lotus hero, footer,
+  colours) comes from the landing page's home.module.css so the two stay in step.
+  --bar and --u / --p are defined by that file's .page class and inherited here.
+*/
+
+/* The author's name: same weight as the landing title, sized for a name */
+.name {
+  margin: calc(var(--u) * 60) 0 0;
+  max-width: 14em;
+  font-size: max(30px, calc(var(--u) * 64));
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 340px);
+  margin-top: calc(var(--u) * 56);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1px solid var(--bar);
+  border-radius: 8px;
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  transition: opacity 0.15s;
+}
+
+.btn:hover {
+  opacity: 0.8;
+}
+
+.btnPrimary {
+  background: var(--bar);
+  color: #fff;
+}
+
+.btnDisabled {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  opacity: 0.55;
+  cursor: default;
+}
+
+.btnDisabled:hover {
+  opacity: 0.55;
+}
+
+@media (max-width: 899px) {
+  .name {
+    margin-top: calc(var(--p) * 18);
+    font-size: 28px;
+  }
+
+  .actions {
+    margin-top: calc(var(--p) * 44);
+  }
+}
+
+/* Phones: the hero fills the first screen, so the footer starts below the fold.
+   svh = the visible height with the browser bars showing; vh is the fallback. */
+@media (max-width: 899px) {
+  div.fullHero {
+    min-height: 100vh;
+    min-height: 100svh;
+  }
+}

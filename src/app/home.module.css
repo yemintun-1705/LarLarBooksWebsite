@@ -757,7 +757,7 @@
 
   .footerTitle,
   .page[lang="en"] .footerTitle {
-    font-size: calc(var(--m) * 38);
+    font-size: calc(var(--m) * 30);
   }
 
   .page[lang="my"] .footerTitle {
